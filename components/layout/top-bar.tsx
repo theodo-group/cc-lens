@@ -11,7 +11,7 @@ interface TopBarProps {
   showStarButton?: boolean
 }
 
-const GITHUB_REPO = 'https://github.com'
+const GITHUB_REPO = 'https://github.com/Arindam200/cc-lens'
 
 function formatTimestamp(d: Date) {
   return d.toLocaleString('en-US', {

@@ -27,7 +27,7 @@ export function Sidebar() {
             textShadow: '1px 1px 0 #7a3a1a',
           }}
         >
-          Claude Board
+          Claude Code Lens
         </span>
         {/* <p className="text-[11px] text-[#7a8494] font-mono mt-2">~/.claude</p> */}
       </div>
