@@ -50,18 +50,20 @@ export async function GET() {
   }
 
   const dailyFromSessions = computeDailyActivityFromSessions(sessions)
-  const dailyActivity = mergeDailyActivity(stats.dailyActivity, dailyFromSessions)
+  const dailyActivity = mergeDailyActivity(stats.dailyActivity ?? [], dailyFromSessions)
+
+  const modelUsage = stats.modelUsage ?? {}
 
   // Compute estimated total cost from modelUsage
   let totalCost = 0
   let totalCacheSavings = 0
-  for (const [model, usage] of Object.entries(stats.modelUsage)) {
+  for (const [model, usage] of Object.entries(modelUsage)) {
     const cost = estimateTotalCostFromModel(model, usage)
     totalCost += cost
     // savings = cache_read * (input_price - cache_read_price)
     const inputPrice = 15.00 / 1_000_000
     const cacheReadPrice = 1.50 / 1_000_000
-    totalCacheSavings += usage.cacheReadInputTokens * (inputPrice - cacheReadPrice)
+    totalCacheSavings += (usage.cacheReadInputTokens ?? 0) * (inputPrice - cacheReadPrice)
   }
 
   // Compute total tokens
@@ -69,11 +71,11 @@ export async function GET() {
   let totalOutputTokens = 0
   let totalCacheReadTokens = 0
   let totalCacheWriteTokens = 0
-  for (const usage of Object.values(stats.modelUsage)) {
-    totalInputTokens += usage.inputTokens
-    totalOutputTokens += usage.outputTokens
-    totalCacheReadTokens += usage.cacheReadInputTokens
-    totalCacheWriteTokens += usage.cacheCreationInputTokens
+  for (const usage of Object.values(modelUsage)) {
+    totalInputTokens += usage.inputTokens ?? 0
+    totalOutputTokens += usage.outputTokens ?? 0
+    totalCacheReadTokens += usage.cacheReadInputTokens ?? 0
+    totalCacheWriteTokens += usage.cacheCreationInputTokens ?? 0
   }
   const totalTokens = totalInputTokens + totalOutputTokens + totalCacheReadTokens + totalCacheWriteTokens
 

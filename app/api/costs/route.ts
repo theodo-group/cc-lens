@@ -16,7 +16,7 @@ export async function GET() {
   // ── Per-model breakdown ────────────────────────────────────────────────────
   let totalCost = 0
   let totalSavings = 0
-  const models: ModelCostBreakdown[] = Object.entries(stats.modelUsage).map(([model, usage]) => {
+  const models: ModelCostBreakdown[] = Object.entries(stats.modelUsage ?? {}).map(([model, usage]) => {
     const cost = estimateTotalCostFromModel(model, usage)
     const eff = cacheEfficiency(model, usage)
     totalCost += cost

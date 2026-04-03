@@ -63,7 +63,7 @@ export async function GET() {
   // Most active day
   let mostActiveDay = ''
   let mostActiveMsgs = 0
-  for (const da of stats.dailyActivity) {
+  for (const da of stats.dailyActivity ?? []) {
     if (da.messageCount > mostActiveMsgs) {
       mostActiveMsgs = da.messageCount
       mostActiveDay = da.date
@@ -72,11 +72,11 @@ export async function GET() {
 
   const hourCountsArr = Array.from({ length: 24 }, (_, i) => ({
     hour: i,
-    count: stats.hourCounts[String(i)] ?? 0,
+    count: (stats.hourCounts ?? {})[String(i)] ?? 0,
   }))
 
   return NextResponse.json({
-    daily_activity: stats.dailyActivity,
+    daily_activity: stats.dailyActivity ?? [],
     hour_counts: hourCountsArr,
     dow_counts: dowCounts.map((count, i) => ({
       day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],

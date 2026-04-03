@@ -128,7 +128,7 @@ export function OverviewClient() {
     )
   }
 
-  if (isLoading || !data) {
+  if (isLoading || !data || !data.computed) {
     return (
       <div className="px-8 py-6 space-y-6">
         <div className="h-8 w-2/3 bg-card rounded animate-pulse" />
