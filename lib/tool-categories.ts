@@ -42,16 +42,44 @@ export const TOOL_CATEGORIES: Record<string, ToolCategory> = {
   ReadMcpResourceTool:  'skill',
 }
 
+/** Theme tokens from app/globals.css — work in light & dark */
 export const CATEGORY_COLORS: Record<ToolCategory, string> = {
-  'file-io':  '#60a5fa',   // blue
-  'shell':    '#d97706',   // orange
-  'agent':    '#a78bfa',   // purple
-  'web':      '#22c55e',   // green
-  'planning': '#fbbf24',   // amber
-  'todo':     '#fb923c',   // orange-light
-  'skill':    '#38bdf8',   // sky
-  'mcp':      '#34d399',   // emerald
-  'other':    '#6b7280',   // gray
+  'file-io':  'var(--viz-tool-file-io)',
+  'shell':    'var(--viz-tool-shell)',
+  'agent':    'var(--viz-tool-agent)',
+  'web':      'var(--viz-tool-web)',
+  'planning': 'var(--viz-tool-planning)',
+  'todo':     'var(--viz-tool-todo)',
+  'skill':    'var(--viz-tool-skill)',
+  'mcp':      'var(--viz-tool-mcp)',
+  'other':    'var(--viz-tool-other)',
+}
+
+/** Per-tool bar colors so Read / Write / Edit / … stay distinct on project cards */
+const TOOL_BAR_OVERRIDES: Record<string, string> = {
+  Read:         'var(--viz-tool-read)',
+  Write:        'var(--viz-tool-write)',
+  Edit:         'var(--viz-tool-edit)',
+  Grep:         'var(--viz-tool-grep)',
+  Glob:         'var(--viz-tool-glob)',
+  NotebookEdit: 'var(--viz-tool-edit)',
+}
+
+export function categorizeTool(name: string): ToolCategory {
+  if (name.startsWith('mcp__')) return 'mcp'
+  return TOOL_CATEGORIES[name] ?? 'other'
+}
+
+export function toolBarColor(toolName: string): string {
+  return TOOL_BAR_OVERRIDES[toolName] ?? CATEGORY_COLORS[categorizeTool(toolName)]
+}
+
+/**
+ * Alpha that works for both hex and `var(--…)` (unlike string concatenation).
+ * @param opacityPercent 0–100 portion of the base color
+ */
+export function categoryColorMix(base: string, opacityPercent: number): string {
+  return `color-mix(in srgb, ${base} ${opacityPercent}%, transparent)`
 }
 
 export const CATEGORY_LABELS: Record<ToolCategory, string> = {
@@ -64,11 +92,6 @@ export const CATEGORY_LABELS: Record<ToolCategory, string> = {
   'skill':    'Skills',
   'mcp':      'MCP',
   'other':    'Other',
-}
-
-export function categorizeTool(name: string): ToolCategory {
-  if (name.startsWith('mcp__')) return 'mcp'
-  return TOOL_CATEGORIES[name] ?? 'other'
 }
 
 export function isMcpTool(name: string): boolean {

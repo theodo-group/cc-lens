@@ -1,194 +1,148 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { formatTokens, formatRelativeDate, projectDisplayName } from '@/lib/decode'
 import type { SessionWithFacet } from '@/types/claude'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-type FilterType = 'active' | 'recent' | 'inactive' | 'all'
+type FilterType = 'active' | 'recent' | 'all'
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const ONE_WEEK_MS = 7 * ONE_DAY_MS
 
 interface Props {
   sessions: SessionWithFacet[]
 }
 
 function shortId(id: string): string {
-  return id.slice(0, 8) + '...'
-}
-
-function shortModel(): string {
-  return 'claude-sonnet-4-...'
+  return id.slice(0, 8) + '…'
 }
 
 export function OverviewConversationTable({ sessions }: Props) {
   const [filter, setFilter] = useState<FilterType>('recent')
+  const [now, setNow] = useState<number | null>(null)
+
+  useEffect(() => {
+    const update = () => setNow(Date.now())
+    const initial = window.setTimeout(update, 0)
+    const interval = window.setInterval(update, 60_000)
+    return () => {
+      window.clearTimeout(initial)
+      window.clearInterval(interval)
+    }
+  }, [])
 
   const filtered = useMemo(() => {
-    // eslint-disable-next-line react-hooks/purity
-    const now = Date.now()
-    const oneDay = 24 * 60 * 60 * 1000
-    const oneWeek = 7 * oneDay
-
     let result: SessionWithFacet[]
     switch (filter) {
       case 'active':
-        result = sessions.filter((s) => {
-          const t = new Date(s.start_time).getTime()
-          return now - t < oneDay
-        })
+        result = now === null
+          ? sessions
+          : sessions.filter(s => now - new Date(s.start_time).getTime() < ONE_DAY_MS)
         break
       case 'recent':
-        result = sessions.filter((s) => {
-          const t = new Date(s.start_time).getTime()
-          return now - t < oneWeek
-        })
-        break
-      case 'inactive':
-        result = sessions.filter((s) => {
-          const t = new Date(s.start_time).getTime()
-          return now - t >= oneWeek
-        })
+        result = now === null
+          ? sessions
+          : sessions.filter(s => now - new Date(s.start_time).getTime() < ONE_WEEK_MS)
         break
       default:
         result = sessions
     }
     return result.sort(
-      (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+      (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
     )
-  }, [sessions, filter])
+  }, [sessions, filter, now])
 
   const displaySessions = filtered.slice(0, 10)
 
-  const FilterButton = ({ value, label }: { value: FilterType; label: string }) => (
-    <button
-      onClick={() => setFilter(value)}
-      className={[
-        'px-3 py-1.5 text-[13px] font-mono rounded border transition-colors',
-        filter === value
-          ? 'bg-primary text-primary-foreground border-primary font-bold'
-          : 'bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-muted-foreground',
-      ].join(' ')}
-    >
-      {label}
-    </button>
-  )
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <FilterButton value="active" label="active" />
-        <FilterButton value="recent" label="recent" />
-        <FilterButton value="inactive" label="inactive" />
-        <FilterButton value="all" label="all" />
-      </div>
+      <Tabs value={filter} onValueChange={v => setFilter(v as FilterType)}>
+        <TabsList>
+          <TabsTrigger value="active">Active (24h)</TabsTrigger>
+          <TabsTrigger value="recent">Recent (7d)</TabsTrigger>
+          <TabsTrigger value="all">All</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-[13px]">
-            <thead>
-              <tr className="border-b border-border bg-muted">
-                <th className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  conversation id
-                </th>
-                <th className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  project
-                </th>
-                <th className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  model
-                </th>
-                <th className="px-3 py-2.5 text-right text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  messages
-                </th>
-                <th className="px-3 py-2.5 text-right text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  tokens
-                </th>
-                <th className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  last activity
-                </th>
-                <th className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  conversation state
-                </th>
-                <th className="px-3 py-2.5 text-left text-[12px] font-bold uppercase tracking-wider text-muted-foreground">
-                  status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {displaySessions.map((s, i) => {
-                const totalMsgs = (s.user_message_count ?? 0) + (s.assistant_message_count ?? 0)
-                const totalTokens = (s.input_tokens ?? 0) + (s.output_tokens ?? 0)
-                const projectName = projectDisplayName(s.project_path ?? '')
-                // eslint-disable-next-line react-hooks/purity
-                const isRecent = Date.now() - new Date(s.start_time).getTime() < 24 * 60 * 60 * 1000
-                const status = isRecent ? 'active' : 'inactive'
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Session</TableHead>
+            <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Project</TableHead>
+            <TableHead className="text-xs uppercase tracking-wider text-muted-foreground text-right">Messages</TableHead>
+            <TableHead className="text-xs uppercase tracking-wider text-muted-foreground text-right">Tokens</TableHead>
+            <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Last Active</TableHead>
+            <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {displaySessions.map(s => {
+            const totalMsgs = (s.user_message_count ?? 0) + (s.assistant_message_count ?? 0)
+            const totalTokens = (s.input_tokens ?? 0) + (s.output_tokens ?? 0)
+            const projectName = projectDisplayName(s.project_path ?? '')
+            const isActive = now !== null && now - new Date(s.start_time).getTime() < ONE_DAY_MS
 
-                return (
-                  <tr
-                    key={s.session_id}
-                    className={`border-b border-border/60 hover:bg-muted/50 transition-colors ${
-                      i % 2 === 0 ? '' : 'bg-muted/30'
-                    }`}
+            return (
+              <TableRow key={s.session_id}>
+                <TableCell className="font-mono text-muted-foreground">
+                  <Link
+                    href={`/sessions/${s.session_id}`}
+                    className="hover:text-primary transition-colors"
+                    title={s.session_id}
                   >
-                    <td className="px-3 py-2 font-mono text-muted-foreground whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1.5">
-                        <span
-                          className="inline-block w-2 h-2 rounded-sm shrink-0 bg-primary/50"
-                          title={s.session_id}
-                        />
-                        <Link
-                          href={`/sessions/${s.session_id}`}
-                          className="hover:text-primary transition-colors"
-                        >
-                          {shortId(s.session_id)}
-                        </Link>
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <Link
-                        href={`/sessions/${s.session_id}`}
-                        className="text-foreground hover:text-primary transition-colors font-medium"
-                      >
-                        {projectName}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground font-mono">{shortModel()}</td>
-                    <td className="px-3 py-2 text-right text-muted-foreground">
-                      {totalMsgs.toLocaleString()}
-                    </td>
-                    <td className="px-3 py-2 text-right font-mono text-primary">
-                      {formatTokens(totalTokens)}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">
-                      {formatRelativeDate(s.start_time) === 'just now' ? 'now' : formatRelativeDate(s.start_time)}
-                    </td>
-                    <td className="px-3 py-2 text-muted-foreground">Completed</td>
-                    <td className="px-3 py-2">
-                      <span
-                        className={
-                          status === 'active'
-                            ? 'text-[#34d399] font-medium'
-                            : 'text-muted-foreground/50'
-                        }
-                      >
-                        {status}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-              {displaySessions.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="px-3 py-8 text-center text-muted-foreground/60 text-[13px]"
+                    {shortId(s.session_id)}
+                  </Link>
+                </TableCell>
+                <TableCell>
+                  <Link
+                    href={`/sessions/${s.session_id}`}
+                    className="font-medium hover:text-primary transition-colors"
                   >
-                    No conversations match filter
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    {projectName}
+                  </Link>
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-muted-foreground">
+                  {totalMsgs.toLocaleString()}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums text-primary">
+                  {formatTokens(totalTokens)}
+                </TableCell>
+                <TableCell className="text-muted-foreground text-sm">
+                  {formatRelativeDate(s.start_time)}
+                </TableCell>
+                <TableCell>
+                  {isActive ? (
+                    <Badge variant="outline" className="text-[#34d399] border-[#34d399]/30 bg-[#34d399]/10 gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] inline-block" />
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary">Completed</Badge>
+                  )}
+                </TableCell>
+              </TableRow>
+            )
+          })}
+          {displaySessions.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                No sessions match this filter
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

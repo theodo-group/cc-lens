@@ -16,9 +16,12 @@ function formatBytes(b: number) {
 
 function JsonValue({ value, depth = 0 }: { value: unknown; depth?: number }) {
   if (value === null) return <span className="text-muted-foreground">null</span>
-  if (typeof value === 'boolean') return <span className="text-[#fbbf24]">{String(value)}</span>
-  if (typeof value === 'number') return <span className="text-[#6ee7b7]">{value}</span>
-  if (typeof value === 'string') return <span className="text-[#f9a875]">&quot;{value}&quot;</span>
+  if (typeof value === 'boolean')
+    return <span className="text-amber-700 dark:text-[#fbbf24]">{String(value)}</span>
+  if (typeof value === 'number')
+    return <span className="text-emerald-700 dark:text-[#6ee7b7]">{value}</span>
+  if (typeof value === 'string')
+    return <span className="text-orange-400 dark:text-[#f9a875]">&quot;{value}&quot;</span>
   if (Array.isArray(value)) {
     if (value.length === 0) return <span className="text-muted-foreground">[]</span>
     return (
@@ -46,7 +49,7 @@ function JsonValue({ value, depth = 0 }: { value: unknown; depth?: number }) {
           {entries.map(([k, v], i) => (
             <div key={k}>
               <span className="text-muted-foreground">&quot;</span>
-              <span className="text-[#93c5fd]">{k}</span>
+              <span className="text-blue-700 dark:text-[#93c5fd]">{k}</span>
               <span className="text-muted-foreground">&quot;</span>
               <span className="text-muted-foreground/60">: </span>
               <JsonValue value={v} depth={depth + 1} />
@@ -167,7 +170,7 @@ export default function SettingsPage() {
                         <p className="text-muted-foreground text-xs mt-0.5">scope: {plugin.scope}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <span className="text-[#6ee7b7] font-mono text-xs">v{plugin.version}</span>
+                        <span className="text-emerald-700 dark:text-[#6ee7b7] font-mono text-xs">v{plugin.version}</span>
                         <p className="text-muted-foreground text-xs mt-0.5">
                           {new Date(plugin.installedAt).toLocaleDateString()}
                         </p>

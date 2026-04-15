@@ -119,13 +119,11 @@ export function SessionTable({ sessions }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [focusedIdx, paginated, router])
 
-  // Reset focus when page/filter changes
-  useEffect(() => { setFocusedIdx(null) }, [page, search, filterCompacted, filterAgent, filterMcp])
-
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === 'desc' ? 'asc' : 'desc')
     else { setSortKey(key); setSortDir('desc') }
     setPage(1)
+    setFocusedIdx(null)
   }
 
   return (
@@ -136,14 +134,14 @@ export function SessionTable({ sessions }: Props) {
           type="text"
           placeholder="Search project or prompt..."
           value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1) }}
+          onChange={e => { setSearch(e.target.value); setPage(1); setFocusedIdx(null) }}
           className="bg-muted border border-border rounded px-2 py-1 text-[13px] text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50 w-52"
         />
         <label className="flex items-center gap-1.5 text-[13px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
           <input
             type="checkbox"
             checked={filterCompacted}
-            onChange={e => { setFilterCompacted(e.target.checked); setPage(1) }}
+            onChange={e => { setFilterCompacted(e.target.checked); setPage(1); setFocusedIdx(null) }}
             className="accent-amber-500"
           />
           ⚡ compacted
@@ -152,7 +150,7 @@ export function SessionTable({ sessions }: Props) {
           <input
             type="checkbox"
             checked={filterAgent}
-            onChange={e => { setFilterAgent(e.target.checked); setPage(1) }}
+            onChange={e => { setFilterAgent(e.target.checked); setPage(1); setFocusedIdx(null) }}
             className="accent-purple-500"
           />
           🤖 agent
@@ -161,7 +159,7 @@ export function SessionTable({ sessions }: Props) {
           <input
             type="checkbox"
             checked={filterMcp}
-            onChange={e => { setFilterMcp(e.target.checked); setPage(1) }}
+            onChange={e => { setFilterMcp(e.target.checked); setPage(1); setFocusedIdx(null) }}
             className="accent-blue-500"
           />
           🔌 mcp
@@ -265,7 +263,7 @@ export function SessionTable({ sessions }: Props) {
           </span>
           <div className="flex gap-1">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              onClick={() => { setPage(p => Math.max(1, p - 1)); setFocusedIdx(null) }}
               disabled={page === 1}
               className="px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
@@ -279,7 +277,7 @@ export function SessionTable({ sessions }: Props) {
               return pages.map((p) => (
                 <button
                   key={p}
-                  onClick={() => setPage(p)}
+                  onClick={() => { setPage(p); setFocusedIdx(null) }}
                   className={`px-2 py-1 rounded border transition-colors ${p === page ? 'border-primary text-primary' : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/40'}`}
                 >
                   {p}
@@ -287,7 +285,7 @@ export function SessionTable({ sessions }: Props) {
               ))
             })()}
             <button
-              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); setFocusedIdx(null) }}
               disabled={page === totalPages}
               className="px-2 py-1 rounded border border-border text-muted-foreground hover:text-foreground hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >

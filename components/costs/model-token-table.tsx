@@ -38,7 +38,7 @@ export function ModelTokenTable({ models }: Props) {
           {models.map(m => (
             <tr key={m.model} className="border-b border-border/30 hover:bg-muted/50 transition-colors">
               <td className="py-2 text-foreground/80">{shortModel(m.model)}</td>
-              <td className="py-2 text-right text-[#60a5fa]">{formatTokens(m.input_tokens)}</td>
+              <td className="py-2 text-right text-blue-700 dark:text-[#60a5fa]">{formatTokens(m.input_tokens)}</td>
               <td className="py-2 text-right text-[#d97706]">{formatTokens(m.output_tokens)}</td>
               <td className="py-2 text-right text-[#a78bfa]">{formatTokens(m.cache_write_tokens)}</td>
               <td className="py-2 text-right text-[#34d399]">{formatTokens(m.cache_read_tokens)}</td>
@@ -47,7 +47,7 @@ export function ModelTokenTable({ models }: Props) {
           ))}
           <tr className="border-t border-border font-bold">
             <td className="py-2 text-muted-foreground">TOTAL</td>
-            <td className="py-2 text-right text-[#60a5fa]">{formatTokens(totals.input)}</td>
+            <td className="py-2 text-right text-blue-700 dark:text-[#60a5fa]">{formatTokens(totals.input)}</td>
             <td className="py-2 text-right text-[#d97706]">{formatTokens(totals.output)}</td>
             <td className="py-2 text-right text-[#a78bfa]">{formatTokens(totals.cacheWrite)}</td>
             <td className="py-2 text-right text-[#34d399]">{formatTokens(totals.cacheRead)}</td>

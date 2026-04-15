@@ -1,62 +1,84 @@
+'use client'
+
+import { TrendingUp, TrendingDown } from 'lucide-react'
+import { LineChart, Line, ResponsiveContainer } from 'recharts'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { useTheme } from '@/components/theme-provider'
+
 interface StatCardProps {
-  label: string
+  title: string
   value: string
-  sub?: string
-  accent?: 'orange' | 'green' | 'blue' | 'amber' | 'default'
-  large?: boolean
+  description?: string
+  /** Percentage change vs previous period: positive = up, negative = down */
+  trend?: number
+  /** Raw values for sparkline (last N days) */
+  sparkData?: number[]
+  accentColor?: string
 }
 
-const ACCENT_CLASSES = {
-  orange:  'text-[#d97706]',
-  green:   'text-[#34d399]',
-  blue:    'text-[#60a5fa]',
-  amber:   'text-[#fbbf24]',
-  default: 'text-foreground',
-}
+export function StatCard({ title, value, description, trend, sparkData, accentColor }: StatCardProps) {
+  const { theme } = useTheme()
+  const resolvedAccent = accentColor ?? (theme === 'light' ? '#f97316' : '#d97706')
+  const hasTrend = trend !== undefined && !isNaN(trend)
+  const isUp = hasTrend && trend! >= 0
+  const trendColor = hasTrend
+    ? isUp
+      ? theme === 'light'
+        ? '#059669'
+        : '#34d399'
+      : theme === 'light'
+        ? '#dc2626'
+        : '#f87171'
+    : undefined
+  const chartData = (sparkData ?? []).map(v => ({ v }))
 
-export function StatCard({ label, value, sub, accent = 'default', large = false }: StatCardProps) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[13px] text-muted-foreground lowercase tracking-wide">
-        {label}:
-      </span>
-      <span
-        className={[
-          large ? 'text-2xl' : 'text-xl',
-          'font-bold tabular-nums',
-          ACCENT_CLASSES[accent],
-        ].join(' ')}
-      >
-        {value}
-      </span>
-      {sub && (
-        <span className="text-[12px] text-muted-foreground/60">{sub}</span>
+    <Card className="gap-3">
+      <CardHeader className="pb-0">
+        <CardDescription className="text-sm font-medium">{title}</CardDescription>
+        <div className="flex items-end justify-between mt-1">
+          <CardTitle
+            className="text-3xl font-bold tabular-nums leading-none"
+            style={{ color: resolvedAccent }}
+          >
+            {value}
+          </CardTitle>
+          {hasTrend && (
+            <Badge
+              variant="outline"
+              className="gap-1 text-xs font-medium"
+              style={{
+                color: trendColor,
+                borderColor: `${trendColor}40`,
+                backgroundColor: `${trendColor}12`,
+              }}
+            >
+              {isUp ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              {Math.abs(trend!).toFixed(1)}%
+            </Badge>
+          )}
+        </div>
+        {description && (
+          <CardDescription className="text-xs mt-1">{description}</CardDescription>
+        )}
+      </CardHeader>
+      {chartData.length > 1 && (
+        <CardContent className="pt-0 pb-4 px-6">
+          <ResponsiveContainer width="100%" height={48}>
+            <LineChart data={chartData} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+              <Line
+                type="monotone"
+                dataKey="v"
+                stroke={resolvedAccent}
+                strokeWidth={1.5}
+                dot={false}
+                strokeOpacity={0.7}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
       )}
-    </div>
-  )
-}
-
-// Inline stat for the header row (matches the image style: "label: VALUE")
-export function InlineStat({
-  label,
-  value,
-  sub,
-  accent = 'default',
-}: {
-  label: string
-  value: string
-  sub?: string
-  accent?: StatCardProps['accent']
-}) {
-  return (
-    <span className="flex items-baseline gap-1.5">
-      <span className="text-[13px] text-muted-foreground">{label}:</span>
-      <span className={['text-sm font-bold tabular-nums', ACCENT_CLASSES[accent]].join(' ')}>
-        {value}
-      </span>
-      {sub && (
-        <span className="text-[12px] text-muted-foreground/50">{sub}</span>
-      )}
-    </span>
+    </Card>
   )
 }

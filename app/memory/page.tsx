@@ -12,7 +12,7 @@ const fetcher = (url: string) =>
 // ── Type config ───────────────────────────────────────────────────────────────
 
 const TYPE_META: Record<MemoryType, { label: string; color: string; bg: string; border: string; dot: string }> = {
-  user:      { label: 'user',      color: 'text-[#60a5fa]', bg: 'bg-[#60a5fa]/10', border: 'border-[#60a5fa]/30', dot: '#60a5fa' },
+  user:      { label: 'user',      color: 'text-blue-700 dark:text-blue-400', bg: 'bg-blue-700/10 dark:bg-blue-400/10', border: 'border-blue-700/30 dark:border-blue-400/30', dot: 'var(--viz-sky)' },
   feedback:  { label: 'feedback',  color: 'text-[#f87171]', bg: 'bg-[#f87171]/10', border: 'border-[#f87171]/30', dot: '#f87171' },
   project:   { label: 'project',   color: 'text-[#a78bfa]', bg: 'bg-[#a78bfa]/10', border: 'border-[#a78bfa]/30', dot: '#a78bfa' },
   reference: { label: 'reference', color: 'text-[#34d399]', bg: 'bg-[#34d399]/10', border: 'border-[#34d399]/30', dot: '#34d399' },
@@ -283,7 +283,7 @@ export default function MemoryPage() {
             {/* Stat cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <StatCard value={memories.length}  label="total memories" color="#fbbf24" />
-              <StatCard value={projectCount}     label="projects"       color="#60a5fa" />
+              <StatCard value={projectCount}     label="projects"       color="var(--viz-sky)" />
               <StatCard value={counts.feedback ?? 0} label="feedback"   color="#f87171" />
               <StatCard value={staleCount}        label="stale (>30d)"  color="#94a3b8" />
             </div>

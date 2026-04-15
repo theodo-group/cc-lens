@@ -5,8 +5,8 @@ export default function OverviewPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopBar
-        title="claude-code-analytics"
-        subtitle="real-time monitoring dashboard"
+        title="Claude Code Analytics"
+        subtitle="Real-time monitoring dashboard for Claude Code"
         showStarButton
       />
       <OverviewClient />

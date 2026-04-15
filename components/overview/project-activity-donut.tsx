@@ -18,7 +18,7 @@ interface Props {
 const PROJECT_COLORS = [
   '#d97706', // reddish-orange (primary)
   '#166534', // dark green
-  '#0ea5e9', // light blue
+  'var(--viz-sky)',
   '#d97706', // orange
   '#34d399', // light green
   '#5a6474', // grey (others)

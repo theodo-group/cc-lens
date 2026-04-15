@@ -86,7 +86,7 @@ export function TokenAccumulationChart({ turns, compactions }: Props) {
           <Line
             type="monotone"
             dataKey="tokens"
-            stroke="#60a5fa"
+            stroke="var(--viz-sky)"
             strokeWidth={1.5}
             dot={false}
             activeDot={{ r: 3 }}

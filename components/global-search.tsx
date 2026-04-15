@@ -110,7 +110,7 @@ export function GlobalSearch() {
                   value={`${s.slug ?? ''} ${s.first_prompt ?? ''} ${projectDisplayName(s.project_path ?? '')}`}
                   onSelect={() => navigate(`/sessions/${s.session_id}`)}
                 >
-                  <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <FileText className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm">{s.slug ?? s.session_id.slice(0, 12)}</span>
                     {s.first_prompt && (

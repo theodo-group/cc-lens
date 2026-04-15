@@ -61,7 +61,7 @@ export async function readSessionsFromProjectJSONL(): Promise<SessionMeta[]> {
       const files = await listProjectJSONLFiles(slug)
       for (const filePath of files) {
         const sessionId = path.basename(filePath, '.jsonl')
-        const meta = await deriveSessionMetaFromJSONL(filePath, sessionId, projectPath, slug)
+        const meta = await deriveSessionMetaFromJSONL(filePath, sessionId, projectPath)
         if (meta) results.push(meta)
       }
     }
@@ -73,12 +73,10 @@ export async function readSessionsFromProjectJSONL(): Promise<SessionMeta[]> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function deriveSessionMetaFromJSONL(
   filePath: string,
   sessionId: string,
-  projectPath: string,
-  slug: string
+  projectPath: string
 ): Promise<SessionMeta | null> {
   let startTime = ''
   let lastTime = ''
@@ -94,6 +92,8 @@ async function deriveSessionMetaFromJSONL(
   let hasMcp = false
   let hasWebSearch = false
   let hasWebFetch = false
+  const messageHours: number[] = []
+  const userMessageTimestamps: string[] = []
 
   try {
     const raw = await fs.readFile(filePath, 'utf-8')
@@ -108,6 +108,13 @@ async function deriveSessionMetaFromJSONL(
         }
         if (obj.type === 'user') {
           userCount++
+          if (ts) {
+            const d = new Date(ts)
+            if (!isNaN(d.getTime())) {
+              messageHours.push(d.getHours())
+              userMessageTimestamps.push(ts)
+            }
+          }
           const content = (obj as { message?: { content?: string | unknown[] } }).message?.content
           if (typeof content === 'string' && !firstPrompt) firstPrompt = stripXmlTags(content).slice(0, 500)
           else if (Array.isArray(content)) {
@@ -179,8 +186,8 @@ async function deriveSessionMetaFromJSONL(
     lines_added: 0,
     lines_removed: 0,
     files_modified: 0,
-    message_hours: [],
-    user_message_timestamps: [],
+    message_hours: messageHours,
+    user_message_timestamps: userMessageTimestamps,
   }
 }
 

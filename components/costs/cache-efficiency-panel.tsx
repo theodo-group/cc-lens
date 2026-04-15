@@ -17,7 +17,7 @@ export function CacheEfficiencyPanel({ models, totalSavings }: Props) {
 
   const pieData = [
     { name: 'Cache Read', value: totalCacheRead, color: '#34d399' },
-    { name: 'Direct Input', value: totalInput, color: '#60a5fa' },
+    { name: 'Direct Input', value: totalInput, color: 'var(--viz-sky)' },
   ]
 
   return (

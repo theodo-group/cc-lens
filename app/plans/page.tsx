@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import useSWR from 'swr'
 import { TopBar } from '@/components/layout/top-bar'
+import { cn } from '@/lib/utils'
+import { ChevronDown, ClipboardList } from 'lucide-react'
 
 const fetcher = (url: string) =>
   fetch(url).then(r => { if (!r.ok) throw new Error(`API error ${r.status}`); return r.json() })
@@ -31,13 +33,25 @@ function extractTitle(content: string): string | null {
 function MarkdownLine({ line }: { line: string }) {
   // h1
   if (/^#\s/.test(line))
-    return <p className="text-foreground font-bold text-base font-mono mt-4 mb-1 first:mt-0">{line.replace(/^#\s/, '')}</p>
+    return (
+      <p className="text-foreground font-bold text-base font-mono mt-4 mb-1 first:mt-0 leading-snug tracking-tight">
+        {line.replace(/^#\s/, '')}
+      </p>
+    )
   // h2
   if (/^##\s/.test(line))
-    return <p className="text-primary font-bold text-sm font-mono mt-3 mb-1">{line.replace(/^##\s/, '')}</p>
+    return (
+      <p className="text-primary font-bold text-sm font-mono mt-3 mb-1 leading-snug">
+        {line.replace(/^##\s/, '')}
+      </p>
+    )
   // h3
   if (/^###\s/.test(line))
-    return <p className="text-foreground font-semibold text-sm font-mono mt-2 mb-0.5">{line.replace(/^###\s/, '')}</p>
+    return (
+      <p className="text-foreground font-semibold text-sm font-mono mt-2 mb-0.5 leading-snug">
+        {line.replace(/^###\s/, '')}
+      </p>
+    )
   // hr
   if (/^---+$/.test(line.trim()))
     return <hr className="border-border my-3" />
@@ -47,7 +61,7 @@ function MarkdownLine({ line }: { line: string }) {
   // bullet list
   if (/^[-*]\s/.test(line))
     return (
-      <p className="text-[#cbd5e1] text-sm font-mono flex gap-2">
+      <p className="text-foreground/95 text-sm font-mono leading-relaxed flex gap-2">
         <span className="text-primary flex-shrink-0">›</span>
         <InlineMarkdown text={line.replace(/^[-*]\s/, '')} />
       </p>
@@ -56,7 +70,7 @@ function MarkdownLine({ line }: { line: string }) {
   if (/^\d+\.\s/.test(line)) {
     const [num, ...rest] = line.split(/\.\s(.+)/)
     return (
-      <p className="text-[#cbd5e1] text-sm font-mono flex gap-2">
+      <p className="text-foreground/95 text-sm font-mono leading-relaxed flex gap-2">
         <span className="text-primary flex-shrink-0 w-5 text-right">{num}.</span>
         <InlineMarkdown text={rest.join('. ')} />
       </p>
@@ -66,7 +80,11 @@ function MarkdownLine({ line }: { line: string }) {
   if (line.startsWith('```'))
     return <span className="text-muted-foreground/60 text-xs font-mono">{line}</span>
 
-  return <p className="text-[#cbd5e1] text-sm font-mono"><InlineMarkdown text={line} /></p>
+  return (
+    <p className="text-foreground/95 text-sm font-mono leading-relaxed">
+      <InlineMarkdown text={line} />
+    </p>
+  )
 }
 
 function InlineMarkdown({ text }: { text: string }) {
@@ -84,7 +102,14 @@ function InlineMarkdown({ text }: { text: string }) {
         if (p.startsWith('*') && p.endsWith('*'))
           return <em key={i} className="text-muted-foreground italic">{p.slice(1, -1)}</em>
         if (p.startsWith('`') && p.endsWith('`'))
-          return <code key={i} className="text-[#6ee7b7] bg-muted px-1 rounded text-xs">{p.slice(1, -1)}</code>
+          return (
+            <code
+              key={i}
+              className="text-emerald-800 dark:text-emerald-300 bg-emerald-950/10 dark:bg-emerald-950/40 px-1 py-0.5 rounded text-xs font-mono"
+            >
+              {p.slice(1, -1)}
+            </code>
+          )
         return <span key={i}>{p}</span>
       })}
     </>
@@ -108,11 +133,16 @@ function MarkdownContent({ content }: { content: string }) {
       } else {
         inCodeBlock = false
         result.push(
-          <div key={i} className="my-2 rounded border border-border bg-muted overflow-x-auto">
+          <div
+            key={i}
+            className="my-2 rounded-lg border border-border bg-muted/80 dark:bg-muted overflow-x-auto shadow-sm"
+          >
             {codeLang && (
-              <div className="px-3 py-1 border-b border-border text-[10px] font-mono text-muted-foreground/60">{codeLang}</div>
+              <div className="px-3 py-1.5 border-b border-border text-[10px] font-mono text-muted-foreground uppercase tracking-wide">
+                {codeLang}
+              </div>
             )}
-            <pre className="px-3 py-2 text-xs font-mono text-foreground leading-relaxed">{codeLines.join('\n')}</pre>
+            <pre className="px-3 py-2.5 text-xs font-mono text-foreground leading-relaxed">{codeLines.join('\n')}</pre>
           </div>
         )
         codeLines = []
@@ -141,47 +171,52 @@ function PlanCard({ plan }: { plan: PlanFile }) {
   const hasMore = plan.content.split('\n').length > 12
 
   return (
-    <div className={[
-      'border rounded-lg transition-all duration-200',
-      expanded ? 'border-primary/50 bg-card' : 'border-border bg-card hover:border-primary/30',
-    ].join(' ')}>
+    <div
+      className={[
+        'border rounded-xl transition-all duration-200 shadow-sm',
+        expanded ? 'border-primary/40 bg-card ring-1 ring-primary/10' : 'border-border bg-card hover:border-primary/25',
+      ].join(' ')}
+    >
 
       {/* Header — always visible */}
       <button
-        className="w-full text-left px-5 py-4 flex items-start justify-between gap-4"
+        type="button"
+        aria-expanded={expanded}
+        className="flex w-full items-start justify-between gap-4 rounded-t-xl px-5 py-4 text-left md:px-6"
         onClick={() => setExpanded(e => !e)}
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2.5 mb-2">
-            <span className="text-[#d97706] text-base">📋</span>
-            <span className="text-foreground font-mono text-sm font-bold truncate">
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center gap-2.5">
+            <ClipboardList className="h-4 w-4 shrink-0 text-[#d97706]" aria-hidden />
+            <span className="truncate font-mono text-sm font-bold text-foreground">
               {title ?? plan.name}
             </span>
           </div>
           {title && title !== plan.name && (
-            <p className="text-muted-foreground/60 text-xs font-mono mb-2 pl-7">{plan.name}</p>
+            <p className="mb-2 pl-7 font-mono text-xs text-muted-foreground/60">{plan.name}</p>
           )}
-          <div className="flex items-center gap-4 pl-7">
-            <span className="text-muted-foreground/60 text-xs font-mono">{formatDate(plan.mtime)}</span>
-            <span className="text-muted-foreground/60 text-xs font-mono">{lines.length} lines</span>
-            <span className="text-muted-foreground/60 text-xs font-mono">{words} words</span>
+          <div className="flex flex-wrap items-center gap-4 pl-7">
+            <span className="font-mono text-xs text-muted-foreground/60">{formatDate(plan.mtime)}</span>
+            <span className="font-mono text-xs text-muted-foreground/60">{lines.length} lines</span>
+            <span className="font-mono text-xs text-muted-foreground/60">{words} words</span>
           </div>
         </div>
-        <div className={[
-          'flex-shrink-0 w-6 h-6 flex items-center justify-center rounded border text-xs font-mono transition-colors',
-          expanded ? 'border-primary/50 text-primary' : 'border-border text-muted-foreground/60',
-        ].join(' ')}>
-          {expanded ? '▲' : '▼'}
-        </div>
+        <ChevronDown
+          className={cn(
+            'mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
+            expanded && 'rotate-180'
+          )}
+          aria-hidden
+        />
       </button>
 
       {/* Preview (collapsed) */}
       {!expanded && (
-        <div className="px-5 pb-4 border-t border-border/50">
-          <div className="pt-3">
+        <div className="px-5 pb-5 md:px-6 border-t border-border/60 bg-muted/25 dark:bg-muted/10">
+          <div className="pt-4 rounded-lg">
             <MarkdownContent content={previewContent} />
             {hasMore && (
-              <p className="text-muted-foreground/60 text-xs font-mono mt-2 pl-1">
+              <p className="text-muted-foreground text-xs font-mono mt-3 pl-0.5">
                 — {plan.content.split('\n').length - 12} more lines, click to expand —
               </p>
             )}
@@ -191,8 +226,8 @@ function PlanCard({ plan }: { plan: PlanFile }) {
 
       {/* Full content (expanded) */}
       {expanded && (
-        <div className="px-5 pb-5 border-t border-primary/20">
-          <div className="pt-4">
+        <div className="px-5 pb-6 md:px-6 border-t border-primary/15 bg-muted/25 dark:bg-muted/10">
+          <div className="pt-5 max-h-[min(70vh,56rem)] overflow-y-auto rounded-lg pr-1">
             <MarkdownContent content={plan.content} />
           </div>
         </div>

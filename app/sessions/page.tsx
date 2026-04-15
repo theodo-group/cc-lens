@@ -18,7 +18,7 @@ export default function SessionsPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <TopBar
-        title="claude-code-analytics · sessions"
+        title="Claude Code Analytics · Sessions"
         subtitle={data ? `${data.total} total sessions` : 'loading...'}
       />
       <div className="p-6">

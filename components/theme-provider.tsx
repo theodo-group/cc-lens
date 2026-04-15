@@ -17,10 +17,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark')
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    const stored = (localStorage.getItem('theme') as Theme) ?? 'dark'
-    setTheme(stored)
-    document.documentElement.classList.toggle('dark', stored === 'dark')
+    const id = window.setTimeout(() => {
+      const stored = localStorage.getItem('theme')
+      const next: Theme = stored === 'light' ? 'light' : 'dark'
+      setTheme(next)
+      document.documentElement.classList.toggle('dark', next === 'dark')
+    }, 0)
+
+    return () => window.clearTimeout(id)
   }, [])
 
   function toggle() {

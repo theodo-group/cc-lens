@@ -92,47 +92,65 @@
   --color-terminal-orange: #d97706;
   --color-terminal-green: #34d399;
   --color-terminal-amber: #f59e0b;
-  --color-terminal-blue: #38bdf8;
+  --color-terminal-blue: var(--viz-sky, #1d4ed8);
   --color-terminal-purple: #a78bfa;
   --color-terminal-red: #f87171;
   --color-terminal-dim: #9ca3af;
   --color-terminal-surface: #0f1117;
 }
 
-/* ─── Light theme (default) ──────────────────────────────────────────────── */
+/* ─── Light theme (default) — higher contrast, clearer surfaces ─────────── */
 :root {
   --radius: 0.375rem;
-  --background: #f9fafb;
-  --foreground: #111827;
+  /* Zinc-based neutrals: page vs cards vs chrome read as distinct layers */
+  --background: #f4f4f5;
+  --foreground: #18181b;
   --card: #ffffff;
-  --card-foreground: #111827;
+  --card-foreground: #18181b;
   --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #ea580c;
+  --popover-foreground: #18181b;
+  --primary: #f97316;
   --primary-foreground: #ffffff;
-  --secondary: #f3f4f6;
-  --secondary-foreground: #374151;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
-  --accent: #f3f4f6;
-  --accent-foreground: #111827;
-  --destructive: #ef4444;
-  --border: #e5e7eb;
-  --input: #f3f4f6;
-  --ring: #d97706;
-  --chart-1: #d97706;
+  --secondary: #e4e4e7;
+  --secondary-foreground: #27272a;
+  --muted: #ececee;
+  --muted-foreground: #52525b;
+  --accent: #e4e4e7;
+  --accent-foreground: #18181b;
+  --destructive: #dc2626;
+  --border: #d4d4d8;
+  /* Input border token: visible edge on white fields */
+  --input: #d4d4d8;
+  --ring: #f97316;
+  --viz-sky: #1d4ed8;
+  /* Tool / category colors (light) — saturated, distinct; SVG uses solid fill (no color-mix) */
+  --viz-tool-read: #1d4ed8;
+  --viz-tool-write: #4338ca;
+  --viz-tool-edit: #ea580c;
+  --viz-tool-grep: #db2777;
+  --viz-tool-glob: #0891b2;
+  --viz-tool-file-io: #2563eb;
+  --viz-tool-shell: #f97316;
+  --viz-tool-agent: #7c3aed;
+  --viz-tool-web: #15803d;
+  --viz-tool-planning: #ca8a04;
+  --viz-tool-todo: #e11d48;
+  --viz-tool-skill: #0e7490;
+  --viz-tool-mcp: #059669;
+  --viz-tool-other: #64748b;
+  --chart-1: #f97316;
   --chart-2: #059669;
-  --chart-3: #3b82f6;
-  --chart-4: #8b5cf6;
-  --chart-5: #f59e0b;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #374151;
-  --sidebar-primary: #d97706;
+  --chart-3: var(--viz-sky);
+  --chart-4: #7c3aed;
+  --chart-5: #d97706;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #3f3f46;
+  --sidebar-primary: #f97316;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3f4f6;
-  --sidebar-accent-foreground: #111827;
-  --sidebar-border: #e5e7eb;
-  --sidebar-ring: #d97706;
+  --sidebar-accent: #e4e4e7;
+  --sidebar-accent-foreground: #18181b;
+  --sidebar-border: #d4d4d8;
+  --sidebar-ring: #f97316;
 }
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
@@ -155,9 +173,24 @@
   --border: #262a36;
   --input: #1e212b;
   --ring: #d97706;
+  --viz-sky: #60a5fa;
+  --viz-tool-read: #60a5fa;
+  --viz-tool-write: #a78bfa;
+  --viz-tool-edit: #fdba74;
+  --viz-tool-grep: #f472b6;
+  --viz-tool-glob: #22d3ee;
+  --viz-tool-file-io: #818cf8;
+  --viz-tool-shell: #fbbf24;
+  --viz-tool-agent: #c4b5fd;
+  --viz-tool-web: #6ee7b7;
+  --viz-tool-planning: #fcd34d;
+  --viz-tool-todo: #fb7185;
+  --viz-tool-skill: #5eead4;
+  --viz-tool-mcp: #86efac;
+  --viz-tool-other: #94a3b8;
   --chart-1: #d97706;
   --chart-2: #34d399;
-  --chart-3: #60a5fa;
+  --chart-3: var(--viz-sky);
   --chart-4: #a78bfa;
   --chart-5: #fbbf24;
   --sidebar: #0b0d12;
@@ -179,6 +212,14 @@
     font-family: var(--font-geist-mono), "JetBrains Mono", "Fira Code", "Consolas", monospace;
     font-size: 15px;
   }
+}
+
+/* ─── Light mode: subtle depth on cards (matches orange-700 primary) ───── */
+:root:not(.dark) [data-slot="card"] {
+  box-shadow:
+    0 1px 2px 0 rgba(24, 24, 27, 0.04),
+    0 4px 16px -2px rgba(249, 115, 22, 0.08),
+    0 0 0 1px rgba(24, 24, 27, 0.05);
 }
 
 /* ─── Scrollbar ──────────────────────────────────────────────────────────── */

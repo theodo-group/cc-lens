@@ -8,7 +8,11 @@ import { UserTurnCard, AssistantTurnCard } from '@/components/sessions/replay/tu
 import { TokenAccumulationChart } from '@/components/sessions/replay/token-accumulation-chart'
 import { SessionBadges } from '@/components/sessions/session-badges'
 import { formatCost, formatTokens, formatDuration, projectDisplayName } from '@/lib/decode'
-import type { ReplayData, SessionMeta } from '@/types/claude'
+import type { ReplayData, SessionWithFacet } from '@/types/claude'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertTriangle, MessageSquare, Coins, DollarSign, Clock, Zap } from 'lucide-react'
 
 const fetcher = (url: string) =>
   fetch(url).then(r => { if (!r.ok) throw new Error(`API error ${r.status}`); return r.json() })
@@ -22,16 +26,19 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
     useSWR<ReplayResponse>(`/api/sessions/${id}/replay`, fetcher)
 
   const { data: metaData } =
-    useSWR<{ session: SessionMeta & { estimated_cost: number } }>(`/api/sessions/${id}`, fetcher)
+    useSWR<{ session: SessionWithFacet }>(`/api/sessions/${id}`, fetcher)
 
   const meta = metaData?.session
 
   if (replayError) {
     return (
       <div className="flex flex-col min-h-screen">
-        <TopBar title="session replay" subtitle="error" />
-        <div className="p-6 text-[#f87171] text-sm font-mono">
-          Error: {String(replayError)}
+        <TopBar title="Session Replay" subtitle="Error" />
+        <div className="p-6">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>Error loading session: {String(replayError)}</AlertDescription>
+          </Alert>
         </div>
       </div>
     )
@@ -40,11 +47,16 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   if (replayLoading || !replayData) {
     return (
       <div className="flex flex-col min-h-screen">
-        <TopBar title="session replay" subtitle="loading..." />
-        <div className="p-6 space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className={`h-${i % 2 === 0 ? '16' : '24'} bg-muted rounded animate-pulse`} />
-          ))}
+        <TopBar title="Session Replay" subtitle="Loading…" />
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+          </div>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className={`h-${i % 2 === 0 ? '16' : '28'} rounded-xl`} />
+            ))}
+          </div>
         </div>
       </div>
     )
@@ -88,32 +100,99 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         subtitle={`${replay.git_branch ?? '?'} · v${replay.version ?? '?'} · ${formatCost(replay.total_cost ?? 0)}`}
       />
 
-      {/* Stats bar */}
-      <div className="border-b border-border px-4 py-2.5 flex flex-wrap gap-4 items-center text-sm">
-        <span className="text-muted-foreground">
-          turns: <span className="text-foreground font-bold">{replay.turns.filter(t => t.type === 'assistant').length}</span>
-        </span>
-        <span className="text-border">·</span>
-        <span className="text-muted-foreground">
-          tokens: <span className="text-[#60a5fa] font-bold">{formatTokens(totalTokens)}</span>
-        </span>
-        <span className="text-border">·</span>
-        <span className="text-muted-foreground">
-          cost: <span className="text-[#d97706] font-bold">{formatCost(replay.total_cost ?? 0)}</span>
-        </span>
+      {/* Stats cards — match project detail page */}
+      <div className="border-b border-border bg-muted/30 px-4 py-4 md:px-6">
+        <div
+          className={
+            3 + (meta ? 1 : 0) + (replay.compactions.length > 0 ? 1 : 0) >= 5
+              ? 'grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5'
+              : 'grid grid-cols-2 gap-4 sm:grid-cols-4'
+          }
+        >
+          <Card className="gap-0">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" /> Turns
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold tabular-nums">
+                {replay.turns.filter(t => t.type === 'assistant').length}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">Assistant messages</p>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-0">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-2">
+                <Coins className="h-4 w-4" /> Tokens
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold tabular-nums text-blue-700 dark:text-[#60a5fa]">{formatTokens(totalTokens)}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">Input + output + cache</p>
+            </CardContent>
+          </Card>
+
+          <Card className="gap-0">
+            <CardHeader className="pb-2">
+              <CardDescription className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" /> Cost
+              </CardDescription>
+              <CardTitle className="text-3xl font-bold tabular-nums text-[#d97706]">
+                {formatCost(replay.total_cost ?? 0)}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground">Estimated spend</p>
+            </CardContent>
+          </Card>
+
+          {meta && (
+            <Card className="gap-0">
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" /> Duration
+                </CardDescription>
+                <CardTitle className="text-3xl font-bold tabular-nums">
+                  {formatDuration(meta.duration_minutes ?? 0)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Session span</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {replay.compactions.length > 0 && (
+            <Card className="gap-0 border-amber-500/25">
+              <CardHeader className="pb-2">
+                <CardDescription className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-500" /> Compactions
+                </CardDescription>
+                <CardTitle className="text-3xl font-bold tabular-nums text-amber-500">
+                  {replay.compactions.length}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-xs text-muted-foreground">Context window events</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         {meta && (
-          <>
-            <span className="text-border">·</span>
-            <span className="text-muted-foreground">
-              duration: <span className="text-foreground font-bold">{formatDuration(meta.duration_minutes ?? 0)}</span>
-            </span>
-          </>
-        )}
-        {replay.compactions.length > 0 && (
-          <>
-            <span className="text-border">·</span>
-            <span className="text-amber-400">⚡ {replay.compactions.length} compaction{replay.compactions.length !== 1 ? 's' : ''}</span>
-          </>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <SessionBadges
+              has_compaction={replay.compactions.length > 0}
+              uses_task_agent={meta.uses_task_agent}
+              uses_mcp={meta.uses_mcp}
+              uses_web_search={meta.uses_web_search}
+              uses_web_fetch={meta.uses_web_fetch}
+              has_thinking={meta.has_thinking}
+            />
+          </div>
         )}
       </div>
 
@@ -150,7 +229,7 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Sidebar */}
-        <div className="w-64 border-l border-border overflow-y-auto px-4 py-6 flex-shrink-0">
+        <div className="w-64 shrink-0 overflow-y-auto border-l border-border px-4 py-6">
           <SessionSidebar replay={replay} meta={meta} />
         </div>
       </div>

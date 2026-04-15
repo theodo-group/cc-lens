@@ -1,7 +1,7 @@
 'use client'
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Cell, ResponsiveContainer } from 'recharts'
-import { CATEGORY_COLORS, categorizeTool } from '@/lib/tool-categories'
+import { toolBarColor } from '@/lib/tool-categories'
 import type { ToolSummary } from '@/types/claude'
 
 interface Props {
@@ -45,7 +45,8 @@ export function ToolRankingChart({ tools }: Props) {
             {top.map((tool, i) => (
               <Cell
                 key={i}
-                fill={CATEGORY_COLORS[categorizeTool(tool.name)] + 'cc'}
+                fill={toolBarColor(tool.name)}
+                fillOpacity={0.92}
               />
             ))}
           </Bar>

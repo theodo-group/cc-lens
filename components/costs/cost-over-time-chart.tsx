@@ -8,7 +8,7 @@ import type { DailyCost } from '@/types/claude'
 const MODEL_COLORS: Record<string, string> = {
   'claude-opus-4-6':        '#d97706',
   'claude-opus-4-5-20251101': '#a78bfa',
-  'claude-sonnet-4-6':      '#60a5fa',
+  'claude-sonnet-4-6':      'var(--viz-sky)',
   'claude-haiku-4-5':       '#34d399',
 }
 

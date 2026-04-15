@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { readStatsCache, readAllSessionMeta } from '@/lib/claude-reader'
+import { getSessions, readStatsCache } from '@/lib/claude-reader'
+import type { DailyActivity, SessionMeta } from '@/types/claude'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,8 +34,70 @@ function computeStreaks(dates: Set<string>): { current: number; longest: number 
   return { current, longest }
 }
 
+function computeDailyActivityFromSessions(sessions: SessionMeta[]): DailyActivity[] {
+  const byDate = new Map<string, { messages: number; sessions: number; tools: number }>()
+
+  for (const s of sessions) {
+    if (!s.start_time) continue
+    const date = s.start_time.slice(0, 10)
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
+
+    const existing = byDate.get(date) ?? { messages: 0, sessions: 0, tools: 0 }
+    existing.messages += (s.user_message_count ?? 0) + (s.assistant_message_count ?? 0)
+    existing.sessions += 1
+    existing.tools += Object.values(s.tool_counts ?? {}).reduce((sum, count) => sum + count, 0)
+    byDate.set(date, existing)
+  }
+
+  return Array.from(byDate.entries())
+    .map(([date, { messages, sessions: sessionCount, tools }]) => ({
+      date,
+      messageCount: messages,
+      sessionCount,
+      toolCallCount: tools,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function mergeDailyActivity(fromStats: DailyActivity[], fromSessions: DailyActivity[]): DailyActivity[] {
+  const byDate = new Map<string, DailyActivity>()
+  for (const d of fromStats) byDate.set(d.date, d)
+  for (const d of fromSessions) byDate.set(d.date, d)
+  return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date))
+}
+
+function computeHourCounts(sessions: SessionMeta[]): Array<{ hour: number; count: number }> {
+  const hourCounts = Array.from({ length: 24 }, () => 0)
+
+  for (const s of sessions) {
+    if (s.user_message_timestamps?.length) {
+      for (const ts of s.user_message_timestamps) {
+        const d = new Date(ts)
+        if (!isNaN(d.getTime())) hourCounts[d.getHours()]++
+      }
+      continue
+    }
+
+    if (s.message_hours?.length) {
+      for (const hour of s.message_hours) {
+        if (Number.isInteger(hour) && hour >= 0 && hour < 24) hourCounts[hour]++
+      }
+      continue
+    }
+
+    const d = new Date(s.start_time)
+    if (!isNaN(d.getTime())) hourCounts[d.getHours()]++
+  }
+
+  return hourCounts.map((count, hour) => ({ hour, count }))
+}
+
 export async function GET() {
-  const [stats, sessions] = await Promise.all([readStatsCache(), readAllSessionMeta()])
+  const [stats, sessions] = await Promise.all([readStatsCache(), getSessions()])
+  const dailyFromSessions = computeDailyActivityFromSessions(sessions)
+  const dailyActivity = stats
+    ? mergeDailyActivity(stats.dailyActivity ?? [], dailyFromSessions)
+    : dailyFromSessions
 
   // Day-of-week counts from session timestamps
   const dowCounts: number[] = [0, 0, 0, 0, 0, 0, 0] // Sun=0..Sat=6
@@ -53,21 +116,16 @@ export async function GET() {
   // Most active day
   let mostActiveDay = ''
   let mostActiveMsgs = 0
-  for (const da of stats?.dailyActivity ?? []) {
+  for (const da of dailyActivity) {
     if (da.messageCount > mostActiveMsgs) {
       mostActiveMsgs = da.messageCount
       mostActiveDay = da.date
     }
   }
 
-  const hourCountsArr = Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    count: (stats?.hourCounts ?? {})[String(i)] ?? 0,
-  }))
-
   return NextResponse.json({
-    daily_activity: stats?.dailyActivity ?? [],
-    hour_counts: hourCountsArr,
+    daily_activity: dailyActivity,
+    hour_counts: computeHourCounts(sessions),
     dow_counts: dowCounts.map((count, i) => ({
       day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
       count,

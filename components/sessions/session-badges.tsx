@@ -30,7 +30,7 @@ export function SessionBadges({
         </span>
       )}
       {uses_mcp && (
-        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[12px] font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[12px] font-medium bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30">
           🔌 mcp
         </span>
       )}

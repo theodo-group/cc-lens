@@ -4,13 +4,18 @@ import { useState, useMemo } from 'react'
 import useSWR from 'swr'
 import { TopBar } from '@/components/layout/top-bar'
 import type { HistoryEntry } from '@/types/claude'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Search, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const fetcher = (url: string) =>
   fetch(url).then(r => { if (!r.ok) throw new Error(`API error ${r.status}`); return r.json() })
 
 function formatTime(ts: number) {
-  const d = new Date(ts)
-  return d.toLocaleString('en-US', {
+  return new Date(ts).toLocaleString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit',
   })
@@ -50,57 +55,67 @@ export default function HistoryPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <TopBar title="claude-code-lens · history" subtitle="~/.claude/history.jsonl" />
+      <TopBar title="History" subtitle="~/.claude/history.jsonl" />
       <div className="p-4 md:p-6 space-y-4">
-        {error && <p className="text-[#f87171] text-sm font-mono">Error: {String(error)}</p>}
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>Error loading data: {String(error)}</AlertDescription>
+          </Alert>
+        )}
+
         {isLoading && (
           <div className="space-y-2">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-14 bg-muted rounded animate-pulse" />
-            ))}
+            {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
           </div>
         )}
+
         {data && (
           <>
+            {/* Search + count */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <div className="flex-1 border border-border rounded bg-card w-full">
-                <input
-                  className="w-full bg-transparent px-4 py-2.5 text-sm font-mono text-foreground placeholder-muted-foreground/50 outline-none"
-                  placeholder="search commands..."
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search commands…"
                   value={search}
                   onChange={e => handleSearch(e.target.value)}
+                  className="pl-9"
                 />
               </div>
-              <p className="text-sm font-mono text-muted-foreground whitespace-nowrap">
-                <span className="text-[#fbbf24] font-bold">{entries.length}</span> entries
-              </p>
+              <Badge variant="outline" className="whitespace-nowrap text-sm px-3 py-1.5">
+                {entries.length.toLocaleString()} entries
+              </Badge>
             </div>
 
             {pageEntries.length === 0 ? (
-              <p className="text-muted-foreground/60 text-sm font-mono text-center py-12">
-                {(data.history?.length ?? 0) === 0 ? 'No history found in ~/.claude/history.jsonl' : 'No entries match your search.'}
-              </p>
+              <div className="text-center py-16 text-muted-foreground text-sm">
+                {(data.history?.length ?? 0) === 0
+                  ? 'No history found in ~/.claude/history.jsonl'
+                  : 'No entries match your search.'}
+              </div>
             ) : (
               <>
                 <div className="space-y-1">
                   {pageEntries.map((entry, i) => (
                     <div
                       key={i}
-                      className="border border-border rounded bg-card px-4 py-3 hover:border-primary/30 transition-colors"
+                      className="border border-border rounded-lg bg-card px-4 py-3 hover:border-primary/30 transition-colors"
                     >
                       <p className="text-sm font-mono text-foreground leading-relaxed break-words">
                         {entry.display || '—'}
                       </p>
-                      <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                      <div className="flex flex-wrap items-center gap-2 mt-1.5">
                         {entry.timestamp && (
-                          <span className="text-xs font-mono text-muted-foreground/60">
+                          <span className="text-xs text-muted-foreground/60">
                             {formatTime(entry.timestamp)}
                           </span>
                         )}
                         {entry.project && (
-                          <span className="text-xs font-mono text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded">
+                          <Badge variant="secondary" className="text-xs font-mono">
                             {projectName(entry.project)}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     </div>
@@ -109,23 +124,27 @@ export default function HistoryPage() {
 
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 pt-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setPage(p => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="px-3 py-1.5 text-sm font-mono border border-border rounded text-muted-foreground hover:text-foreground hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
-                      ← prev
-                    </button>
-                    <span className="text-sm font-mono text-muted-foreground/60">
+                      <ChevronLeft className="w-4 h-4" />
+                      Prev
+                    </Button>
+                    <span className="text-sm text-muted-foreground tabular-nums">
                       {page} / {totalPages}
                     </span>
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="px-3 py-1.5 text-sm font-mono border border-border rounded text-muted-foreground hover:text-foreground hover:border-primary/40 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
-                      next →
-                    </button>
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
                   </div>
                 )}
               </>
