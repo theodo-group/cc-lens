@@ -1,4 +1,4 @@
-![Claude Code Lens dashboard](./public/image.png)
+![cc-lens CLI](./public/cc-lens.png)
 
 # Claude Code Lens (cc-lens)
 
@@ -12,8 +12,6 @@ The CLI finds a free local port, starts the dashboard, and opens it in your brow
 
 ## Quick Start
 
-![cc-lens CLI](./public/cc-lens.png)
-
 Run directly with `npx`:
 
 ```bash
@@ -26,6 +24,12 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 
 ### Overview
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./public/dashboard-dark.png" />
+  <source media="(prefers-color-scheme: light)" srcset="./public/dashboard-white.png" />
+  <img alt="Dashboard overview" src="./public/dashboard-dark.png" />
+</picture>
+
 - Sessions, messages, token usage, estimated cost, and local storage.
 - Trend cards with sparklines.
 - Date presets for 7, 30, and 90 days, plus a custom date range picker.
@@ -33,11 +37,15 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 
 ### Projects
 
+![Projects](./public/projects.png)
+
 - Searchable, sortable project grid.
 - Per-project cards with sessions, duration, estimated cost, languages, git branches, MCP/agent badges, and top tools.
 - Project detail pages with sessions, cost over time, language distribution, branch activity, and tool usage.
 
 ### Sessions
+
+![Session replay and chat](./public/session-chat.png)
 
 - Searchable session table with badges for compaction, agents, MCP, web search/fetch, and extended thinking.
 - Full session replay reconstructed from JSONL.
@@ -49,6 +57,8 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 
 ### Costs
 
+![Costs](./public/costs.png)
+
 - Total estimated cost, cache savings, and estimated cost without cache.
 - Cost over time and cost by project.
 - Per-model token and cost breakdown.
@@ -56,6 +66,7 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 - Pricing reference from `lib/pricing.ts`.
 
 ### Tools & Features
+![Tools & features](./public/tools.png)
 
 - Tool ranking across all sessions.
 - Tool categories for file I/O, shell, agents, web, planning, todos, skills, MCP, and other calls.
@@ -67,12 +78,16 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 
 ### Activity
 
+![Activity calendar](./public/activity.png)
+
 - GitHub-style activity calendar.
 - Current streak, longest streak, active days, and most active day.
 - Usage over time, peak hours, and day-of-week patterns.
 - Activity can be derived from session JSONL when the stats cache is incomplete.
 
 ### Local Claude Code Files
+
+![Todos](./public/todos.png)
 
 - **History**: Search and page through `~/.claude/history.jsonl`.
 - **Todos**: Browse todos from `~/.claude/todos/` with search and status filters.
@@ -82,6 +97,8 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 
 ### Export & Import
 
+![Export](./public/export.png)
+
 - Export a portable `.ccboard.json` file containing stats, session metadata, facets, and recent command history.
 - Preview export counts before downloading.
 - Optionally filter exports by session start date.
@@ -90,6 +107,8 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 Import is intentionally preview-only right now. It shows which sessions are new or already present, but it does not write merged data back into `~/.claude/`, to avoid corrupting live Claude Code files.
 
 ## Navigation
+
+![Global search (Command K)](./public/command-k.png)
 
 - Global search: `Cmd+K`, `Ctrl+K`, or `/`.
 - Session list keyboard navigation: `j` / `k` to move, `Enter` to open, `Esc` to clear.
