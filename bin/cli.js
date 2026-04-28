@@ -109,7 +109,12 @@ async function main() {
 
   // Use Next's JS entry (not node_modules/.bin/next[.cmd]) — Windows EINVAL if spawn() tries to exec .cmd without shell.
   const nextCli = path.join(CACHE_DIR, 'node_modules', 'next', 'dist', 'bin', 'next')
-  const needsSetup = cachedVersion !== pkg.version || !fs.existsSync(nextCli)
+  // Inspector proxy is optional but, when the source ships it, expect it in cache —
+  // else a stale cache from a previous version (without proxy) would silently disable it.
+  const proxySrc   = path.join(PKG_DIR,   'proxy', 'server.js')
+  const proxyCache = path.join(CACHE_DIR, 'proxy', 'server.js')
+  const proxyMissing = fs.existsSync(proxySrc) && !fs.existsSync(proxyCache)
+  const needsSetup = cachedVersion !== pkg.version || !fs.existsSync(nextCli) || proxyMissing
 
   if (needsSetup) {
     console.log(`  ${DIM}Setting up (first run, may take a minute)…${R}\n`)
