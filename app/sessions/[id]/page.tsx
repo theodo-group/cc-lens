@@ -12,7 +12,9 @@ import type { ReplayData, SessionWithFacet } from '@/types/claude'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { AlertTriangle, MessageSquare, Coins, DollarSign, Clock, Zap } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { RawApiTab } from '@/components/sessions/raw-api/raw-api-tab'
+import { AlertTriangle, MessageSquare, Coins, DollarSign, Clock, Zap, Radio } from 'lucide-react'
 
 const fetcher = (url: string) =>
   fetch(url).then(r => { if (!r.ok) throw new Error(`API error ${r.status}`); return r.json() })
@@ -196,48 +198,70 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
         )}
       </div>
 
-      {/* Two-column layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Conversation replay */}
-        <div className="flex-1 min-w-0 overflow-y-auto px-4 py-6 max-w-6xl">
-          {replay.turns.map((turn, i) => {
-            const compactionBefore = compactionByTurnIndex.get(i)
-
-            if (turn.type === 'user') {
-              return (
-                <UserTurnCard
-                  key={turn.uuid || i}
-                  turn={turn}
-                  turnNumber={i + 1}
-                  compactionBefore={compactionBefore}
-                  toolResults={toolResults}
-                />
-              )
-            }
-
-            assistantTurnNum++
-            return (
-              <AssistantTurnCard
-                key={turn.uuid || i}
-                turn={turn}
-                turnNumber={assistantTurnNum}
-                compactionBefore={compactionBefore}
-                toolResults={toolResults}
-              />
-            )
-          })}
+      {/* Tabs: Replay (default) | Raw API */}
+      <Tabs defaultValue="replay" className="flex flex-1 flex-col overflow-hidden">
+        <div className="border-b border-border px-4 pt-2">
+          <TabsList variant="line">
+            <TabsTrigger value="replay" className="gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Replay
+            </TabsTrigger>
+            <TabsTrigger value="raw" className="gap-2">
+              <Radio className="h-4 w-4" />
+              Raw API
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        {/* Sidebar */}
-        <div className="w-64 shrink-0 overflow-y-auto border-l border-border px-4 py-6">
-          <SessionSidebar replay={replay} meta={meta} />
-        </div>
-      </div>
+        <TabsContent value="replay" className="flex flex-1 flex-col overflow-hidden data-[state=inactive]:hidden">
+          {/* Two-column layout */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Conversation replay */}
+            <div className="flex-1 min-w-0 overflow-y-auto px-4 py-6 max-w-6xl">
+              {replay.turns.map((turn, i) => {
+                const compactionBefore = compactionByTurnIndex.get(i)
 
-      {/* Token accumulation chart */}
-      <div className="border-t border-border px-4 py-4">
-        <TokenAccumulationChart turns={replay.turns} compactions={replay.compactions} />
-      </div>
+                if (turn.type === 'user') {
+                  return (
+                    <UserTurnCard
+                      key={turn.uuid || i}
+                      turn={turn}
+                      turnNumber={i + 1}
+                      compactionBefore={compactionBefore}
+                      toolResults={toolResults}
+                    />
+                  )
+                }
+
+                assistantTurnNum++
+                return (
+                  <AssistantTurnCard
+                    key={turn.uuid || i}
+                    turn={turn}
+                    turnNumber={assistantTurnNum}
+                    compactionBefore={compactionBefore}
+                    toolResults={toolResults}
+                  />
+                )
+              })}
+            </div>
+
+            {/* Sidebar */}
+            <div className="w-64 shrink-0 overflow-y-auto border-l border-border px-4 py-6">
+              <SessionSidebar replay={replay} meta={meta} />
+            </div>
+          </div>
+
+          {/* Token accumulation chart */}
+          <div className="border-t border-border px-4 py-4">
+            <TokenAccumulationChart turns={replay.turns} compactions={replay.compactions} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="raw" className="flex-1 overflow-y-auto data-[state=inactive]:hidden">
+          <RawApiTab sessionId={id} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

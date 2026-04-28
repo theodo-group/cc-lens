@@ -1,13 +1,19 @@
 {
-  "name": "cc-lens",
-  "version": "0.3.1",
-  "description": "Claude Code Lens — visualize your usage, costs, and sessions from ~/.claude/",
+  "name": "@theodo-group/cc-lens",
+  "version": "0.4.0",
+  "description": "Claude Code Lens — visualize your usage, costs, sessions, and intercept raw Anthropic API payloads",
   "author": "Arindam Majumder <arindam@studio1hq.com> (https://github.com/Arindam200)",
+  "contributors": [
+    "Theodo Group (https://github.com/theodo-group)"
+  ],
   "license": "MIT",
-  "homepage": "https://github.com/Arindam200/cc-lens#readme",
+  "homepage": "https://github.com/theodo-group/cc-lens#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Arindam200/cc-lens.git"
+    "url": "https://github.com/theodo-group/cc-lens.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "claude",
@@ -46,6 +52,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "better-sqlite3": "^11.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -67,6 +74,7 @@
     "typescript": "^5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "eslint": "9.39.3",
     "eslint-config-next": "16.2.2",
     "shadcn": "^4.2.0"

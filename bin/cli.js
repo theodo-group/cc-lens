@@ -66,7 +66,7 @@ function openBrowser(url) {
 }
 
 // Source dirs/files to mirror into ~/.cc-lens/
-const SRC_DIRS  = ['app', 'components', 'lib', 'types', 'public']
+const SRC_DIRS  = ['app', 'components', 'lib', 'types', 'public', 'proxy']
 const SRC_FILES = ['next.config.ts', 'tsconfig.json', 'postcss.config.mjs', 'components.json']
 
 function syncSource(pkg) {
@@ -94,6 +94,9 @@ function syncSource(pkg) {
 }
 
 async function main() {
+  const args = process.argv.slice(2)
+  const noProxy = args.includes('--no-proxy')
+
   printBanner()
 
   const pkg = require(path.join(PKG_DIR, 'package.json'))
@@ -132,6 +135,36 @@ async function main() {
   const port = await findFreePort(3000)
   const url  = `http://localhost:${port}`
 
+  // ─── proxy spawn (optional) ────────────────────────────────────────────────
+  let proxyChild = null
+  let proxyUrl = null
+  if (!noProxy) {
+    const proxyPort = await findFreePort(8089)
+    const proxyScript = path.join(CACHE_DIR, 'proxy', 'server.js')
+    if (fs.existsSync(proxyScript)) {
+      proxyUrl = `http://localhost:${proxyPort}`
+      proxyChild = spawn(process.execPath, [proxyScript], {
+        cwd: CACHE_DIR,
+        stdio: [process.platform === 'win32' ? 'ignore' : 'inherit', 'pipe', 'pipe'],
+        env: { ...process.env, CC_LENS_PROXY_PORT: String(proxyPort) },
+      })
+      proxyChild.stdout.on('data', d => process.stdout.write(d))
+      proxyChild.stderr.on('data', d => process.stderr.write(d))
+      proxyChild.on('exit', code => {
+        if (code != null && code !== 0) {
+          console.error(`  ${DIM}proxy exited with code ${code}${R}`)
+        }
+      })
+      console.log(`  ${DIM}Inspector proxy on${R} ${O2}${B}${proxyUrl}${R}`)
+      console.log(`  ${DIM}  → ${R}export ANTHROPIC_BASE_URL=${proxyUrl}`)
+      console.log(`  ${DIM}    (also set ANTHROPIC_API_KEY when using ANTHROPIC_BASE_URL)${R}`)
+    } else {
+      console.log(`  ${DIM}proxy script not found, skipping inspector${R}`)
+    }
+  } else {
+    console.log(`  ${DIM}--no-proxy: inspector capture disabled${R}`)
+  }
+
   console.log(`  ${DIM}Starting server on${R} ${O2}${B}${url}${R}\n`)
 
   // On Windows, mixing 'inherit' + 'pipe' in stdio causes EINVAL. Use 'ignore'
@@ -155,11 +188,19 @@ async function main() {
   child.stdout.on('data', (d) => { process.stdout.write(d); checkReady(d.toString()) })
   child.stderr.on('data', (d) => { process.stderr.write(d); checkReady(d.toString()) })
 
-  child.on('exit', (code) => process.exit(code ?? 0))
+  child.on('exit', (code) => {
+    if (proxyChild) { try { proxyChild.kill() } catch { /* */ } }
+    process.exit(code ?? 0)
+  })
 
   // Windows doesn't support SIGINT/SIGTERM — child.kill() (no arg) works cross-platform.
-  process.on('SIGINT',  () => { child.kill(); process.exit(0) })
-  process.on('SIGTERM', () => { child.kill(); process.exit(0) })
+  function killAll() {
+    try { child.kill() } catch { /* */ }
+    if (proxyChild) { try { proxyChild.kill() } catch { /* */ } }
+    process.exit(0)
+  }
+  process.on('SIGINT',  killAll)
+  process.on('SIGTERM', killAll)
 }
 
 main().catch((err) => { console.error(err); process.exit(1) })

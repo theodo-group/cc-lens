@@ -55,6 +55,75 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 - Per-turn model, duration, token breakdown, and estimated cost.
 - Compaction events shown in context with a token accumulation chart.
 
+### Raw API Inspector (this fork)
+
+![Raw API anatomy](./public/raw-api-anatomy.png)
+
+A built-in HTTP proxy intercepts every request Claude Code makes to `api.anthropic.com`,
+gzips request and response bodies to disk, and renders them on each session page under a
+new **Raw API** tab.
+
+What you can see for each captured request:
+
+- **Meta strip** — model, stream flag, status, duration, `max_tokens`, `thinking` config
+  (including extended-thinking budget), `output_config`, and the `cc_version` parsed from
+  the smuggled `x-anthropic-billing-header`.
+- **Usage** — input / output / cache-read / cache-write tokens with the cache hit rate.
+- **System Prompt** — the literal three-block system prompt Claude Code sends, with
+  cyan **cache breakpoint** lines marking exactly where the prompt cache is cut and
+  per-block token estimates.
+- **Tool Definitions** — collapsible cards for each of the 40+ tools Claude Code exposes,
+  with the full JSON schema sent to the model and a token cost per tool.
+- **Message History** — color-coded user/assistant turns broken into typed blocks
+  (`text`, `thinking`, `tool_use`, `tool_result`) with per-block token estimates and
+  cached/final badges.
+- **Response** — the raw SSE event stream as it came off the wire.
+
+The proxy is single-user and stateless: it forwards your `Authorization` / `x-api-key`
+header untouched, never persists headers to disk, and only stores the JSON request and
+response bodies under `~/.cc-lens/payloads/<sessionId>/`. A SQLite index lives at
+`~/.cc-lens/inspector.db`.
+
+#### Using it
+
+In one terminal, run cc-lens — the inspector proxy boots automatically alongside the
+dashboard:
+
+```bash
+npx @theodo-group/cc-lens
+# or, until the package is published, run it straight from GitHub:
+npx github:theodo-group/cc-lens
+```
+
+The CLI prints two URLs: the dashboard (e.g. `http://localhost:3000`) and the inspector
+proxy (e.g. `http://localhost:8089`). To capture traffic, point Claude Code at the proxy:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...      # required: see note below
+export ANTHROPIC_BASE_URL=http://localhost:8089
+claude
+```
+
+Then use Claude Code normally. Each request shows up on its session page under the
+**Raw API** tab in real time. Captures are correlated to JSONL sessions automatically by
+parsing `metadata.user_id.session_id` from the request body — the same UUID that names
+the JSONL file.
+
+To launch the dashboard without the proxy, pass `--no-proxy`. To pick a specific port,
+set `CC_LENS_PROXY_PORT`. Retention defaults to 1 GB total or 30 days, whichever comes
+first; tune via `CC_LENS_RETENTION_BYTES` and `CC_LENS_RETENTION_DAYS`.
+
+#### Auth caveat
+
+Setting `ANTHROPIC_BASE_URL` puts Claude Code into API-key auth mode — it stops reading
+the OAuth token from your keychain. You need a real Anthropic API key from
+[console.anthropic.com](https://console.anthropic.com/settings/keys). Subscription
+(Pro/Max) auth does not flow through `ANTHROPIC_BASE_URL`. This is a Claude Code
+behavior, not a cc-lens limitation.
+
+When the proxy isn't running or `ANTHROPIC_BASE_URL` isn't set, the Raw API tab shows an
+empty state with setup instructions; the rest of the dashboard works exactly as before.
+
 ### Costs
 
 ![Costs](./public/costs.png)
@@ -182,7 +251,13 @@ Dashboard data refreshes every 5 seconds while the app is open.
 
 ## Privacy
 
-Claude Code Lens runs locally and reads files from your machine. It does not require a login, API key, hosted backend, or telemetry service. Your Claude Code history stays on your computer.
+Claude Code Lens runs locally and reads files from your machine. It does not require a login, hosted backend, or telemetry service. Your Claude Code history stays on your computer.
+
+The optional Raw API Inspector proxy intercepts traffic between Claude Code and
+`api.anthropic.com` only when you explicitly point Claude Code at it via
+`ANTHROPIC_BASE_URL`. Captured request and response bodies are written locally to
+`~/.cc-lens/`. Auth headers are forwarded to Anthropic but never persisted. Disable the
+proxy entirely with `--no-proxy`.
 
 ## Cost Estimates
 
