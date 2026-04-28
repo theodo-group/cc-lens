@@ -22,6 +22,45 @@ function truncate(s: string, n = 80): string {
   return s.length > n ? s.slice(0, n) + '…' : s
 }
 
+function ExpandableBlock({ label, text, isError = false }: { label: string; text: string; isError?: boolean }) {
+  const [open, setOpen] = useState(false)
+  const long = text.length > 1000
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between">
+        <p
+          className={cn(
+            'text-[11px] font-medium uppercase tracking-wide',
+            isError ? 'text-red-400' : 'text-muted-foreground/70',
+          )}
+        >
+          {label}
+        </p>
+        {long && (
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            className="text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            {open ? 'Show less' : `Show full (${text.length.toLocaleString()} chars)`}
+          </button>
+        )}
+      </div>
+      <pre
+        className={cn(
+          'overflow-auto whitespace-pre-wrap break-all rounded-md border p-2 text-xs',
+          open ? 'max-h-[60vh]' : 'max-h-48',
+          isError
+            ? 'border-red-500/25 bg-red-950/20 text-red-200/90'
+            : 'border-border/50 bg-background/80 text-muted-foreground',
+        )}
+      >
+        {text}
+      </pre>
+    </div>
+  )
+}
+
 function getToolArg(tool: ToolCall): string {
   const inp = tool.input ?? {}
   if (inp.command) return String(inp.command).slice(0, 60)
@@ -92,33 +131,16 @@ export function ToolCallBadge({ tool, result }: { tool: ToolCall; result?: { con
       </Button>
       {expanded && (
         <div className="space-y-2 border-t px-2.5 py-2.5" style={{ borderColor: categoryColorMix(color, 24) }}>
-          <div>
-            <p className="mb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">Input</p>
-            <pre className="max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-md border border-border/50 bg-background/80 p-2 text-xs text-muted-foreground">
-              {truncate(JSON.stringify(tool.input, null, 2), 500)}
-            </pre>
-          </div>
+          <ExpandableBlock
+            label="Input"
+            text={JSON.stringify(tool.input, null, 2)}
+          />
           {result && (
-            <div>
-              <p
-                className={cn(
-                  'mb-1 text-[11px] font-medium uppercase tracking-wide',
-                  result.is_error ? 'text-red-400' : 'text-muted-foreground/70'
-                )}
-              >
-                {result.is_error ? 'Error' : 'Result'}
-              </p>
-              <pre
-                className={cn(
-                  'max-h-32 overflow-auto whitespace-pre-wrap break-all rounded-md border p-2 text-xs',
-                  result.is_error
-                    ? 'border-red-500/25 bg-red-950/20 text-red-200/90'
-                    : 'border-border/50 bg-background/80 text-muted-foreground'
-                )}
-              >
-                {truncate(result.content, 500)}
-              </pre>
-            </div>
+            <ExpandableBlock
+              label={result.is_error ? 'Error' : 'Result'}
+              text={result.content}
+              isError={result.is_error}
+            />
           )}
         </div>
       )}

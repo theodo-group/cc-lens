@@ -10,7 +10,22 @@ import type {
 } from '@/types/inspector'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { ChevronDown, ChevronRight, Snowflake, Hash, FileText, Wrench, Brain, MessageSquare, Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ChevronDown, ChevronRight, Snowflake, Hash, FileText, Wrench, Brain, MessageSquare, Sparkles, Download } from 'lucide-react'
+
+// ─── download helpers ────────────────────────────────────────────────────────
+
+function downloadBlob(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 // ─── token estimate (chars/4) ───────────────────────────────────────────────
 
@@ -383,15 +398,54 @@ function MetaStrip({ detail }: { detail: CaptureDetail }) {
   }
   if (s.cc_version) items.push({ label: 'cc_version', value: s.cc_version })
 
+  const idShort = s.request_id.slice(0, 8)
+  const onDownloadRequest = () => {
+    if (!r) return
+    downloadBlob(`request-${idShort}.json`, JSON.stringify(r, null, 2), 'application/json')
+  }
+  const onDownloadResponse = () => {
+    if (!detail.response_text) return
+    // Streaming responses are raw SSE text; non-streaming are JSON. Pick filename + mime accordingly.
+    if (s.is_streaming) {
+      downloadBlob(`response-${idShort}.sse.txt`, detail.response_text, 'text/event-stream')
+    } else {
+      downloadBlob(`response-${idShort}.json`, detail.response_text, 'application/json')
+    }
+  }
+
   return (
     <Card>
-      <CardContent className="flex flex-wrap gap-x-6 gap-y-2 py-3">
+      <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-2 py-3">
         {items.map((it) => (
           <div key={it.label} className="text-xs">
             <span className="text-muted-foreground">{it.label}: </span>
             <span className="font-medium">{it.value}</span>
           </div>
         ))}
+        <div className="ml-auto flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onDownloadRequest}
+            disabled={!r}
+            className="h-7 gap-1.5 text-xs"
+          >
+            <Download className="h-3 w-3" />
+            Request JSON
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onDownloadResponse}
+            disabled={!detail.response_text}
+            className="h-7 gap-1.5 text-xs"
+          >
+            <Download className="h-3 w-3" />
+            {s.is_streaming ? 'Response SSE' : 'Response JSON'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

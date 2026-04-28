@@ -87,7 +87,7 @@ export async function parseSessionReplay(
               : (typeof c.content === 'string' ? c.content : '')
             tool_results.push({
               tool_use_id: c.tool_use_id ?? '',
-              content: resultContent.slice(0, 2000),
+              content: resultContent,
               is_error: c.is_error ?? false,
             })
           }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import useSWR from 'swr'
 import type { CaptureDetail, CaptureSummary } from '@/types/inspector'
 import { CapturesEmptyState } from './empty-state'
@@ -25,14 +25,13 @@ export function RawApiTab({ sessionId }: { sessionId: string }) {
     { refreshInterval: 5000 },
   )
 
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [userSelectedId, setUserSelectedId] = useState<string | null>(null)
 
-  // Auto-select the first capture when the list arrives.
-  useEffect(() => {
-    if (!selectedId && data?.captures && data.captures.length > 0) {
-      setSelectedId(data.captures[0].request_id)
-    }
-  }, [data?.captures, selectedId])
+  // Effective selection: user's pick if set, otherwise the first capture in the list.
+  // Derived state — no useEffect needed.
+  const selectedId =
+    userSelectedId ??
+    (data?.captures && data.captures.length > 0 ? data.captures[0].request_id : null)
 
   const { data: detail, isLoading: detailLoading } = useSWR<CaptureDetail>(
     selectedId ? `/api/captures/${selectedId}` : null,
@@ -63,7 +62,7 @@ export function RawApiTab({ sessionId }: { sessionId: string }) {
       <CaptureList
         captures={data.captures}
         selectedId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={setUserSelectedId}
       />
       <div className="flex-1 min-h-0">
         {detailLoading && !detail ? (

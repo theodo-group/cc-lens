@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { AlertCircle, CheckCircle2, FileEdit, FileText, Info } from 'lucide-react'
 
@@ -67,14 +68,33 @@ interface Props {
 
 export function UserToolResult({ content, isError }: Props) {
   const parsed = parseToolResultMessage(content)
+  const [expanded, setExpanded] = useState(false)
 
   if (isError) {
+    const longErr = content.length > 600
     return (
       <div className="flex gap-2.5 rounded-xl border border-red-500/25 bg-red-950/25 px-3 py-2.5 text-left">
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-red-400/90">Tool error</p>
-          <pre className="mt-1 whitespace-pre-wrap wrap-break-word font-mono text-[12px] leading-relaxed text-red-200/90">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-red-400/90">Tool error</p>
+            {longErr && (
+              <button
+                type="button"
+                onClick={() => setExpanded(e => !e)}
+                className="text-[11px] text-red-300/70 hover:text-red-200 transition-colors"
+              >
+                {expanded ? 'Show less' : `Show full (${content.length.toLocaleString()} chars)`}
+              </button>
+            )}
+          </div>
+          <pre
+            className={cn(
+              'mt-1 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-[12px] leading-relaxed text-red-200/90',
+              longErr && !expanded && 'max-h-32',
+              longErr && expanded && 'max-h-[60vh]',
+            )}
+          >
             {content}
           </pre>
         </div>
@@ -148,11 +168,27 @@ export function UserToolResult({ content, isError }: Props) {
         'text-[13px] leading-relaxed text-foreground/85'
       )}
     >
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">Result</p>
-      <p className={cn('mt-1.5 whitespace-pre-wrap wrap-break-word', long && 'line-clamp-6')}>{text}</p>
-      {long && (
-        <p className="mt-2 text-[11px] text-muted-foreground/50">… {text.length.toLocaleString()} characters total</p>
-      )}
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">Result</p>
+        {long && (
+          <button
+            type="button"
+            onClick={() => setExpanded(e => !e)}
+            className="text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+          >
+            {expanded ? 'Show less' : `Show full (${text.length.toLocaleString()} chars)`}
+          </button>
+        )}
+      </div>
+      <pre
+        className={cn(
+          'mt-1.5 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-[12px] leading-relaxed',
+          long && !expanded && 'max-h-32',
+          long && expanded && 'max-h-[60vh]',
+        )}
+      >
+        {text}
+      </pre>
     </div>
   )
 }
