@@ -2,23 +2,19 @@
 
 # Claude Code Lens (cc-lens)
 
-Local analytics dashboard for Claude Code. No cloud, no telemetry, no API key, just your `~/.claude/` data, visualized.
+> **This is a Theodo Group fork of [Arindam200/cc-lens](https://github.com/Arindam200/cc-lens).**
+> It adds an inspector proxy and a real-time **Live Capture** view that intercepts the raw
+> requests Claude Code sends to `api.anthropic.com` — system prompt, tool schemas, cache
+> breakpoints, message history, SSE response. Useful for debugging unexpected Claude Code
+> behavior and for understanding how the CLI assembles its context window.
+
+Local analytics dashboard for Claude Code. No cloud, no telemetry, just your `~/.claude/` data, visualized.
 
 ```bash
-npx cc-lens
+npx github:theodo-group/cc-lens
 ```
 
 The CLI finds a free local port, starts the dashboard, and opens it in your browser.
-
-## Quick Start
-
-Run directly with `npx`:
-
-```bash
-npx cc-lens
-```
-
-On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After that, launches are faster.
 
 ## What You Can See
 
@@ -55,66 +51,13 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 - Per-turn model, duration, token breakdown, and estimated cost.
 - Compaction events shown in context with a token accumulation chart.
 
-### Raw API Inspector (this fork)
+### Live Capture
 
-![Raw API anatomy](./public/raw-api-anatomy.png)
+![Live Capture page](./public/live-capture.png)
 
-A built-in HTTP proxy intercepts every request Claude Code makes to `api.anthropic.com`,
-gzips request and response bodies to disk, and renders them on a new **Live** page (real-time
-tail across all sessions) and on each session page under a **Raw API** tab.
-
-Start, stop, and observe the proxy from the dashboard — there's a **Live Capture** button in
-the top bar with a green/red indicator and a popover that exposes the connect command with a
-copy button.
-
-What you can see for each captured request:
-
-- **Meta strip** — model, stream flag, status, duration, `max_tokens`, `thinking` config
-  (including extended-thinking budget), `output_config`, and the `cc_version` parsed from
-  the smuggled `x-anthropic-billing-header`.
-- **Usage** — input / output / cache-read / cache-write tokens with the cache hit rate.
-- **System Prompt** — the literal three-block system prompt Claude Code sends, with
-  cyan **cache breakpoint** lines marking exactly where the prompt cache is cut and
-  per-block token estimates.
-- **Tool Definitions** — collapsible cards for each of the 40+ tools Claude Code exposes,
-  with the full JSON schema sent to the model and a token cost per tool.
-- **Message History** — color-coded user/assistant turns broken into typed blocks
-  (`text`, `thinking`, `tool_use`, `tool_result`) with per-block token estimates and
-  cached/final badges.
-- **Response** — the raw SSE event stream as it came off the wire.
-
-The proxy is single-user and stateless: it forwards your `Authorization` / `x-api-key`
-header untouched, never persists headers to disk, and only stores the JSON request and
-response bodies under `~/.cc-lens/payloads/<sessionId>/`. A SQLite index lives at
-`~/.cc-lens/inspector.db`.
-
-#### Using it
-
-Run cc-lens as usual:
-
-```bash
-npx @theodo-group/cc-lens
-# or, until the package is published, run it straight from GitHub:
-npx github:theodo-group/cc-lens
-```
-
-The dashboard opens in your browser. The proxy is **off by default** — click the
-**Live Capture** button in the top bar, hit **Start**, and the popover will display
-the connect command on a free port:
-
-```bash
-ANTHROPIC_BASE_URL=http://localhost:<port> claude
-```
-
-Copy it with the button next to the snippet, paste in a new terminal, and use Claude
-Code normally. Captures stream to the **Live** page in real time and to each session's
-**Raw API** tab. The proxy persists across Next.js restarts (PID file at
-`~/.cc-lens/proxy.json`); click **Stop** to terminate it.
-
-Captures are correlated to JSONL sessions automatically by parsing
-`metadata.user_id.session_id` from the request body — the same UUID that names the
-JSONL file. Retention defaults to 1 GB total or 30 days, whichever comes first; tune
-via `CC_LENS_RETENTION_BYTES` and `CC_LENS_RETENTION_DAYS`.
+- Click **Live Capture** in the top bar → **Start**, then run `ANTHROPIC_BASE_URL=http://localhost:<port> claude` in a new terminal — the snippet (with the right port) is copyable from the popover.
+- The **Live** page shows a real-time tail of every Anthropic API request with a side-by-side anatomy view: system prompt with cache breakpoints, tool schemas, message history, raw SSE response.
+- Captures are correlated to JSONL sessions automatically and also surface under a **Raw API** tab on each session page; data is gzipped to `~/.cc-lens/payloads/` with a SQLite index.
 
 ### Costs
 
@@ -241,26 +184,6 @@ npm run lint
 
 Dashboard data refreshes every 5 seconds while the app is open.
 
-## Privacy
-
-Claude Code Lens runs locally and reads files from your machine. It does not require a login, hosted backend, or telemetry service. Your Claude Code history stays on your computer.
-
-The optional Raw API Inspector proxy is off by default. You launch it from the dashboard
-(top-bar **Live Capture** button → **Start**), and it only intercepts traffic when you
-explicitly point Claude Code at it via `ANTHROPIC_BASE_URL`. Captured request and
-response bodies are written locally to `~/.cc-lens/`. Auth headers are forwarded to
-Anthropic but never persisted. Click **Stop** to terminate the proxy.
-
 ## Cost Estimates
 
 Claude Code stores token counts and model identifiers, not final billing totals. `cc-lens` estimates cost using the pricing table in `lib/pricing.ts`. If provider pricing changes, update that file to keep estimates current.
-
-## Star History
-
-<a href="https://www.star-history.com/?repos=Arindam200%2Fcc-lens&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Arindam200/cc-lens&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Arindam200/cc-lens&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Arindam200/cc-lens&type=date&legend=top-left" />
- </picture>
-</a>
