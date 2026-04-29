@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { mutate } from 'swr'
-import { Search, RefreshCw, Star, Github, Menu } from 'lucide-react'
+import { Search, RefreshCw, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/layout/sidebar-context'
 import { LiveCaptureButton } from '@/components/proxy/live-capture-button'
@@ -12,11 +12,8 @@ import { cn } from '@/lib/utils'
 interface TopBarProps {
   title: string
   subtitle?: string
-  showStarButton?: boolean
   className?: string
 }
-
-const GITHUB_REPO = 'https://github.com/Arindam200/cc-lens'
 
 function formatTimestamp(d: Date) {
   return d.toLocaleString('en-US', {
@@ -29,7 +26,7 @@ function formatTimestamp(d: Date) {
   })
 }
 
-export function TopBar({ title, subtitle, showStarButton = false, className }: TopBarProps) {
+export function TopBar({ title, subtitle, className }: TopBarProps) {
   const router = useRouter()
   const { setMobileOpen } = useSidebar()
   const [refreshing, setRefreshing] = useState(false)
@@ -122,18 +119,6 @@ export function TopBar({ title, subtitle, showStarButton = false, className }: T
 
         {/* Live Capture (proxy lifecycle) */}
         <LiveCaptureButton />
-
-        {/* Star on GitHub */}
-        {showStarButton && (
-          <Button asChild size="sm" className="gap-2 font-medium">
-            <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
-              <Github className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Star on GitHub</span>
-              <span className="sm:hidden">Star</span>
-              <Star className="w-3 h-3 fill-current opacity-80" />
-            </a>
-          </Button>
-        )}
       </div>
     </header>
   )

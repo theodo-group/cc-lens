@@ -106,20 +106,16 @@ async function main() {
 
   // Use Next's JS entry (not node_modules/.bin/next[.cmd]) — Windows EINVAL if spawn() tries to exec .cmd without shell.
   const nextCli = path.join(CACHE_DIR, 'node_modules', 'next', 'dist', 'bin', 'next')
-  // Inspector proxy is optional but, when the source ships it, expect it in cache —
-  // else a stale cache from a previous version (without proxy) would silently disable it.
-  const proxySrc   = path.join(PKG_DIR,   'proxy', 'server.js')
-  const proxyCache = path.join(CACHE_DIR, 'proxy', 'server.js')
-  const proxyMissing = fs.existsSync(proxySrc) && !fs.existsSync(proxyCache)
-  const needsSetup = cachedVersion !== pkg.version || !fs.existsSync(nextCli) || proxyMissing
+  // npm install is the slow part — only re-run when version changes or deps disappear.
+  const installNeeded = cachedVersion !== pkg.version || !fs.existsSync(nextCli)
 
-  if (needsSetup) {
-    console.log(`  ${DIM}Setting up (first run, may take a minute)…${R}\n`)
+  // Always sync source from PKG_DIR → CACHE_DIR so newer commits / hotfixes
+  // pulled by `npx github:...` take effect even when the version string
+  // hasn't been bumped. cp -r of small dirs is fast (~tens of ms).
+  syncSource(pkg)
 
-    // Copy all source files into ~/.cc-lens/ so Next.js runs entirely within
-    // that directory — no symlinks, no Turbopack root violations.
-    syncSource(pkg)
-
+  if (installNeeded) {
+    console.log(`  ${DIM}Installing dependencies (first run, may take a minute)…${R}\n`)
     await new Promise((resolve, reject) => {
       const install = spawn('npm', ['install', '--prefer-offline', '--no-package-lock'], {
         cwd: CACHE_DIR,
@@ -130,7 +126,6 @@ async function main() {
         code === 0 ? resolve() : reject(new Error(`npm install failed (exit ${code})`))
       )
     })
-
     fs.writeFileSync(versionFile, pkg.version)
   }
 

@@ -7,7 +7,6 @@ export default function OverviewPage() {
       <TopBar
         title="Claude Code Analytics"
         subtitle="Real-time monitoring dashboard for Claude Code"
-        showStarButton
       />
       <OverviewClient />
     </div>

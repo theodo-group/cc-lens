@@ -1,6 +1,6 @@
 {
   "name": "@theodo-group/cc-lens",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Claude Code Lens — visualize your usage, costs, sessions, and intercept raw Anthropic API payloads",
   "author": "Arindam Majumder <arindam@studio1hq.com> (https://github.com/Arindam200)",
   "contributors": [
