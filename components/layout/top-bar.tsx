@@ -6,6 +6,7 @@ import { mutate } from 'swr'
 import { Search, RefreshCw, Star, Github, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useSidebar } from '@/components/layout/sidebar-context'
+import { LiveCaptureButton } from '@/components/proxy/live-capture-button'
 import { cn } from '@/lib/utils'
 
 interface TopBarProps {
@@ -118,6 +119,9 @@ export function TopBar({ title, subtitle, showStarButton = false, className }: T
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">{refreshing ? 'Refreshing…' : 'Refresh'}</span>
         </Button>
+
+        {/* Live Capture (proxy lifecycle) */}
+        <LiveCaptureButton />
 
         {/* Star on GitHub */}
         {showStarButton && (

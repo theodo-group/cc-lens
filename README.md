@@ -60,8 +60,12 @@ On first run, `cc-lens` prepares a small runtime cache in `~/.cc-lens/`. After t
 ![Raw API anatomy](./public/raw-api-anatomy.png)
 
 A built-in HTTP proxy intercepts every request Claude Code makes to `api.anthropic.com`,
-gzips request and response bodies to disk, and renders them on each session page under a
-new **Raw API** tab.
+gzips request and response bodies to disk, and renders them on a new **Live** page (real-time
+tail across all sessions) and on each session page under a **Raw API** tab.
+
+Start, stop, and observe the proxy from the dashboard — there's a **Live Capture** button in
+the top bar with a green/red indicator and a popover that exposes the connect command with a
+copy button.
 
 What you can see for each captured request:
 
@@ -86,8 +90,7 @@ response bodies under `~/.cc-lens/payloads/<sessionId>/`. A SQLite index lives a
 
 #### Using it
 
-In one terminal, run cc-lens — the inspector proxy boots automatically alongside the
-dashboard:
+Run cc-lens as usual:
 
 ```bash
 npx @theodo-group/cc-lens
@@ -95,34 +98,23 @@ npx @theodo-group/cc-lens
 npx github:theodo-group/cc-lens
 ```
 
-The CLI prints two URLs: the dashboard (e.g. `http://localhost:3000`) and the inspector
-proxy (e.g. `http://localhost:8089`). To capture traffic, point Claude Code at the proxy:
+The dashboard opens in your browser. The proxy is **off by default** — click the
+**Live Capture** button in the top bar, hit **Start**, and the popover will display
+the connect command on a free port:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...      # required: see note below
-export ANTHROPIC_BASE_URL=http://localhost:8089
-claude
+ANTHROPIC_BASE_URL=http://localhost:<port> claude
 ```
 
-Then use Claude Code normally. Each request shows up on its session page under the
-**Raw API** tab in real time. Captures are correlated to JSONL sessions automatically by
-parsing `metadata.user_id.session_id` from the request body — the same UUID that names
-the JSONL file.
+Copy it with the button next to the snippet, paste in a new terminal, and use Claude
+Code normally. Captures stream to the **Live** page in real time and to each session's
+**Raw API** tab. The proxy persists across Next.js restarts (PID file at
+`~/.cc-lens/proxy.json`); click **Stop** to terminate it.
 
-To launch the dashboard without the proxy, pass `--no-proxy`. To pick a specific port,
-set `CC_LENS_PROXY_PORT`. Retention defaults to 1 GB total or 30 days, whichever comes
-first; tune via `CC_LENS_RETENTION_BYTES` and `CC_LENS_RETENTION_DAYS`.
-
-#### Auth caveat
-
-Setting `ANTHROPIC_BASE_URL` puts Claude Code into API-key auth mode — it stops reading
-the OAuth token from your keychain. You need a real Anthropic API key from
-[console.anthropic.com](https://console.anthropic.com/settings/keys). Subscription
-(Pro/Max) auth does not flow through `ANTHROPIC_BASE_URL`. This is a Claude Code
-behavior, not a cc-lens limitation.
-
-When the proxy isn't running or `ANTHROPIC_BASE_URL` isn't set, the Raw API tab shows an
-empty state with setup instructions; the rest of the dashboard works exactly as before.
+Captures are correlated to JSONL sessions automatically by parsing
+`metadata.user_id.session_id` from the request body — the same UUID that names the
+JSONL file. Retention defaults to 1 GB total or 30 days, whichever comes first; tune
+via `CC_LENS_RETENTION_BYTES` and `CC_LENS_RETENTION_DAYS`.
 
 ### Costs
 
@@ -253,11 +245,11 @@ Dashboard data refreshes every 5 seconds while the app is open.
 
 Claude Code Lens runs locally and reads files from your machine. It does not require a login, hosted backend, or telemetry service. Your Claude Code history stays on your computer.
 
-The optional Raw API Inspector proxy intercepts traffic between Claude Code and
-`api.anthropic.com` only when you explicitly point Claude Code at it via
-`ANTHROPIC_BASE_URL`. Captured request and response bodies are written locally to
-`~/.cc-lens/`. Auth headers are forwarded to Anthropic but never persisted. Disable the
-proxy entirely with `--no-proxy`.
+The optional Raw API Inspector proxy is off by default. You launch it from the dashboard
+(top-bar **Live Capture** button → **Start**), and it only intercepts traffic when you
+explicitly point Claude Code at it via `ANTHROPIC_BASE_URL`. Captured request and
+response bodies are written locally to `~/.cc-lens/`. Auth headers are forwarded to
+Anthropic but never persisted. Click **Stop** to terminate the proxy.
 
 ## Cost Estimates
 
